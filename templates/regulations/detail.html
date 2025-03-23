@@ -255,6 +255,23 @@
             background-color: #fafbfc;
         }
         
+        .cause-section {
+            margin-bottom: 1.5rem;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 12px;
+        }
+        
+        .cause-section-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+        }
+        
+        .cause-section-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
         .info-group {
             margin-bottom: 1rem;
         }
@@ -275,6 +292,7 @@
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            table-layout: fixed;
         }
         
         .punishment-table thead {
@@ -291,6 +309,18 @@
         .punishment-table td {
             padding: 0.8rem 1rem;
             vertical-align: middle;
+            word-wrap: break-word;
+        }
+        
+        .punishment-table th:nth-child(1),
+        .punishment-table th:nth-child(2),
+        .punishment-table th:nth-child(3),
+        .punishment-table th:nth-child(4) {
+            width: 100px;
+        }
+        
+        .punishment-table th:nth-child(5) {
+            width: auto;
         }
         
         .table-hover tbody tr:hover {
@@ -366,9 +396,19 @@
             <div class="row metadata-row">
                 <div class="col-md-6 metadata-col">
                     <div class="metadata-item">
+                        <i class="bi bi-hash"></i>
+                        <span class="info-label">文号：</span>
+                        <span class="info-value">{{ regulation.document_number or '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
                         <i class="bi bi-building"></i>
-                        <span class="info-label">来源：</span>
-                        <span class="info-value">{{ regulation.source or '未知' }}</span>
+                        <span class="info-label">通过机构：</span>
+                        <span class="info-value">{{ regulation.issued_by or '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="bi bi-building-check"></i>
+                        <span class="info-label">批准机构：</span>
+                        <span class="info-value">{{ regulation.approved_by or '未知' }}</span>
                     </div>
                     <div class="metadata-item">
                         <i class="bi bi-tag"></i>
@@ -380,14 +420,24 @@
                 </div>
                 <div class="col-md-6 metadata-col">
                     <div class="metadata-item">
-                        <i class="bi bi-calendar-event"></i>
-                        <span class="info-label">发布日期：</span>
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="info-label">批准日期：</span>
                         <span class="info-value">{{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '未知' }}</span>
                     </div>
                     <div class="metadata-item">
-                        <i class="bi bi-calendar-check"></i>
+                        <i class="bi bi-calendar-event"></i>
                         <span class="info-label">生效日期：</span>
                         <span class="info-value">{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="bi bi-award"></i>
+                        <span class="info-label">效力级别：</span>
+                        <span class="info-value">{{ regulation.hierarchy_level or '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="bi bi-pencil-square"></i>
+                        <span class="info-label">修订日期：</span>
+                        <span class="info-value">{{ regulation.revision_date.strftime('%Y-%m-%d') if regulation.revision_date else '未知' }}</span>
                     </div>
                 </div>
             </div>
@@ -442,32 +492,28 @@
                              aria-labelledby="heading{{ cause.id }}" 
                              data-bs-parent="#causesAccordion">
                             <div class="cause-content">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="info-group">
-                                            <span class="info-label">事由：</span>
-                                            <span class="info-value">{{ cause.description }}</span>
-                                        </div>
-                                        <div class="info-group">
-                                            <span class="info-label">违则：</span>
-                                            <span class="info-value">{{ cause.violation_type or '未知' }}</span>
-                                        </div>
-                                        <div class="info-group">
-                                            <span class="info-label">违则条款：</span>
-                                            <span class="info-value">{{ cause.violation_clause or '未知' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="info-group">
-                                            <span class="info-label">行为：</span>
-                                            <span class="info-value">{{ cause.behavior or '未知' }}</span>
-                                        </div>
-                                        <div class="info-group">
-                                            <span class="info-label">违法行为：</span>
-                                            <span class="info-value">{{ cause.illegal_behavior or '未知' }}</span>
-                                        </div>
+                                <!-- 依据信息 -->
+                                <div class="cause-section">
+                                    <h6 class="cause-section-title"><i class="bi bi-check-circle me-2"></i>依据</h6>
+                                    <div class="cause-section-content">
+                                        {% if cause.behavior == cause.penalty_type %}
+                                            {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}
+                                        {% else %}
+                                            {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}<br>
+                                            {{ cause.behavior or '' }}
+                                        {% endif %}
                                     </div>
                                 </div>
+                                
+                                <!-- 违则信息 -->
+                                {% if cause.behavior != cause.violation_type %}
+                                <div class="cause-section">
+                                    <h6 class="cause-section-title"><i class="bi bi-exclamation-triangle me-2"></i>违则</h6>
+                                    <div class="cause-section-content">
+                                        {{ cause.violation_type or '' }} {{ cause.violation_clause or '' }}
+                                    </div>
+                                </div>
+                                {% endif %}
 
                                 <!-- 处罚措施表格 -->
                                 <table class="table table-sm table-hover punishment-table">

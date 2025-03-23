@@ -70,11 +70,13 @@ class LegalCause(db.Model):
     code = db.Column(db.String(100), nullable=False)  # 唯一编号
     description = db.Column(db.Text, nullable=False)  # 事由描述
     
-    # 新增字段，匹配Excel中的列
+    # 匹配Excel中的列
     violation_type = db.Column(db.String(200))  # 违则
     violation_clause = db.Column(db.String(200))  # 违则条款
     behavior = db.Column(db.Text)  # 行为
     illegal_behavior = db.Column(db.Text)  # 违法行为
+    penalty_type = db.Column(db.String(200))  # 罚则
+    penalty_clause = db.Column(db.String(200))  # 罚则条款
     
     severity = db.Column(db.String(20))  # 严重程度
     

@@ -242,6 +242,8 @@ def update_legal_data(info_file, structure_file, cause_file, punish_file):
                                 violation_clause=str(row['违则条款']) if pd.notna(row.get('违则条款', None)) else None,
                                 behavior=str(row['行为']) if pd.notna(row.get('行为', None)) else None,
                                 illegal_behavior=str(row['违法行为']) if pd.notna(row.get('违法行为', None)) else None,
+                                penalty_type=str(row['罚则']) if pd.notna(row.get('罚则', None)) else None,
+                                penalty_clause=str(row['罚则条款']) if pd.notna(row.get('罚则条款', None)) else None,
                                 severity='一般'  # 默认设置
                             )
                             db.session.add(cause)
