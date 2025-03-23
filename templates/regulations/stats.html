@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ regulation.name }} - 统计数据</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0f2b50;      /* 更深的主色调 */
+            --primary-light: #1a3c6e;      /* 原主色调 */
+            --secondary-color: #f5f7fa;    /* 稍微暗一点的背景色 */
+            --accent-color: #a5801d;       /* 更深的金色 */
+            --accent-light: #c59c34;       /* 原金色 */
+            --dark-color: #1e2838;         /* 更深的深色 */
+            --light-accent: #e1e9f4;       /* 更暗的浅蓝色强调 */
+            --text-primary: #24292e;       /* 更深的文本色 */
+            --text-secondary: #5c6370;     /* 更深的次要文本色 */
+            --border-radius: 6px;          /* 减小圆角 */
+            --card-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            --transition: all 0.3s ease;
+            --success-color: #216e36;      /* 更深的绿色 */
+            --warning-color: #d77a00;      /* 更深的橙色 */
+            --danger-color: #9c2121;       /* 更深的红色 */
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background-color: var(--secondary-color);
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            padding: 0.7rem 1rem;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .navbar-brand i {
+            margin-right: 8px;
+            color: var(--accent-color);
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1rem;
+            position: relative;
+            font-weight: 500;
+        }
+        
+        .header-wrapper {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #081728 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(25deg);
+        }
+        
+        .stats-header {
+            color: white;
+            padding: 2.5rem 1.5rem;
+            border-radius: 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stats-title {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            position: relative;
+        }
+        
+        .stats-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin-top: 10px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        
+        .back-button i {
+            margin-right: 6px;
+        }
+        
+        .stats-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            border: none;
+            overflow: hidden;
+            border-top: 3px solid var(--primary-color);
+        }
+        
+        .stats-card-header {
+            background-color: var(--light-accent);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .stats-card-body {
+            padding: 1.5rem;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-item {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.2rem;
+            text-align: center;
+            border-top: 3px solid var(--primary-color);
+        }
+        
+        .summary-item.punishment {
+            border-top-color: var(--success-color);
+        }
+        
+        .summary-item.structure {
+            border-top-color: var(--accent-color);
+        }
+        
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+        
+        .summary-item.punishment .summary-value {
+            color: var(--success-color);
+        }
+        
+        .summary-item.structure .summary-value {
+            color: var(--accent-color);
+        }
+        
+        .summary-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            position: relative;
+            max-width: 100%;
+            min-height: 300px;
+        }
+        
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links a {
+            color: rgba(255,255,255,0.7);
+            margin-left: 1.5rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .copyright {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            background-color: rgba(0, 0, 0, 0.02);
+            border-radius: var(--border-radius);
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-title {
+                font-size: 1.5rem;
+            }
+            
+            .stats-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .summary-value {
+                font-size: 1.8rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-links {
+                margin-top: 1rem;
+            }
+            
+            .footer-links a {
+                margin: 0 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-book-half"></i> 法律法规管理平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house-fill"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/search/regulations">
+                            <i class="bi bi-search"></i> 法规搜索
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/advanced_search">
+                            <i class="bi bi-filter"></i> 高级搜索
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person-gear"></i> 个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="header-wrapper">
+        <div class="container">
+            <div class="stats-header">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <a href="{{ url_for('search_regulations') }}" class="back-button">
+                        <i class="bi bi-arrow-left"></i> 返回法规列表
+                    </a>
+                    <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" class="back-button">
+                        <i class="bi bi-file-text"></i> 查看法规详情
+                    </a>
+                </div>
+                <h2 class="stats-title">{{ regulation.name }} - 统计数据</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="stats-summary">
+            <div class="summary-item">
+                <div class="summary-value">{{ causes_count }}</div>
+                <p class="summary-label">事由总数</p>
+            </div>
+            <div class="summary-item punishment">
+                <div class="summary-value">{{ punishments_count }}</div>
+                <p class="summary-label">处罚总数</p>
+            </div>
+            <div class="summary-item structure">
+                <div class="summary-value">{{ structures_count }}</div>
+                <p class="summary-label">条文总数</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <i class="bi bi-bar-chart-fill me-2"></i> 处罚类型分布
+                    </div>
+                    <div class="stats-card-body">
+                        {% if punishment_types %}
+                        <div class="chart-container">
+                            <canvas id="punishmentTypeChart"></canvas>
+                        </div>
+                        {% else %}
+                        <div class="no-data">
+                            <i class="bi bi-x-circle"></i>
+                            <p>暂无处罚类型数据</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <i class="bi bi-people-fill me-2"></i> 处罚对象分布
+                    </div>
+                    <div class="stats-card-body">
+                        {% if punishment_targets %}
+                        <div class="chart-container">
+                            <canvas id="punishmentTargetChart"></canvas>
+                        </div>
+                        {% else %}
+                        <div class="no-data">
+                            <i class="bi bi-x-circle"></i>
+                            <p>暂无处罚对象数据</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-card mt-4">
+            <div class="stats-card-header">
+                <i class="bi bi-list-check me-2"></i> 事由与处罚关系
+            </div>
+            <div class="stats-card-body">
+                {% if punishment_by_cause %}
+                <div class="chart-container">
+                    <canvas id="causesPunishmentChart" height="400"></canvas>
+                </div>
+                {% else %}
+                <div class="no-data">
+                    <i class="bi bi-x-circle"></i>
+                    <p>暂无事由与处罚关系数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p class="copyright mb-0">&copy; 2025 法律法规管理平台. 保留所有权利.</p>
+                <div class="footer-links">
+                    <a href="#"><i class="bi bi-question-circle me-1"></i>帮助中心</a>
+                    <a href="#"><i class="bi bi-envelope me-1"></i>联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 图表配置和数据
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置更严肃的颜色方案
+            const colors = [
+                'rgba(15, 43, 80, 0.8)',      // 深蓝
+                'rgba(165, 128, 29, 0.8)',    // 深金色
+                'rgba(33, 110, 54, 0.8)',     // 深绿色
+                'rgba(156, 33, 33, 0.8)',     // 深红色
+                'rgba(95, 44, 131, 0.8)',     // 深紫色
+                'rgba(215, 122, 0, 0.8)',     // 深橙色
+                'rgba(45, 45, 45, 0.8)',      // 深灰色
+                'rgba(0, 107, 128, 0.8)',     // 深青色
+                'rgba(111, 73, 0, 0.8)',      // 深棕色
+                'rgba(0, 68, 102, 0.8)'       // 靛蓝色
+            ];
+
+            // 图表通用选项
+            const chartOptions = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#24292e',
+                            font: {
+                                family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                            }
+                        }
+                    },
+                    title: {
+                        font: {
+                            family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#24292e'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 40, 56, 0.9)',
+                        titleFont: {
+                            family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                        },
+                        bodyFont: {
+                            family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                        },
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(165, 128, 29, 0.5)',
+                        borderWidth: 1
+                    }
+                }
+            };
+
+            // 处罚类型分布图表
+            {% if punishment_types %}
+            const punishmentTypeCtx = document.getElementById('punishmentTypeChart').getContext('2d');
+            const punishmentTypeChart = new Chart(punishmentTypeCtx, {
+                type: 'pie',
+                data: {
+                    labels: {{ punishment_types|map(attribute='type')|list|tojson }},
+                    datasets: [{
+                        data: {{ punishment_types|map(attribute='count')|list|tojson }},
+                        backgroundColor: colors,
+                        borderColor: 'rgba(255,255,255,0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '处罚类型占比',
+                            font: {
+                                size: 16,
+                                family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                                weight: 'bold'
+                            },
+                            color: '#24292e'
+                        }
+                    }
+                }
+            });
+            {% endif %}
+
+            // 处罚对象分布图表
+            {% if punishment_targets %}
+            const punishmentTargetCtx = document.getElementById('punishmentTargetChart').getContext('2d');
+            const punishmentTargetChart = new Chart(punishmentTargetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ punishment_targets|map(attribute='target')|list|tojson }},
+                    datasets: [{
+                        data: {{ punishment_targets|map(attribute='count')|list|tojson }},
+                        backgroundColor: colors,
+                        borderColor: 'rgba(255,255,255,0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    plugins: {
+                        ...chartOptions.plugins,
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '处罚对象占比',
+                            font: {
+                                size: 16,
+                                family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                                weight: 'bold'
+                            },
+                            color: '#24292e'
+                        }
+                    }
+                }
+            });
+            {% endif %}
+
+            // 事由与处罚关系图表
+            {% if punishment_by_cause %}
+            const causesPunishmentCtx = document.getElementById('causesPunishmentChart').getContext('2d');
+            const causesPunishmentChart = new Chart(causesPunishmentCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ punishment_by_cause|map(attribute='cause_desc')|list|tojson }},
+                    datasets: [{
+                        label: '处罚数量',
+                        data: {{ punishment_by_cause|map(attribute='count')|list|tojson }},
+                        backgroundColor: 'rgba(15, 43, 80, 0.7)',
+                        borderColor: 'rgba(15, 43, 80, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '处罚数量',
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                precision: 0,
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '事由名称',
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#24292e',
+                                font: {
+                                    family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif"
+                                },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        ...chartOptions.plugins,
+                        title: {
+                            display: true,
+                            text: '各事由处罚数量',
+                            font: {
+                                size: 16,
+                                family: "'Microsoft YaHei', '微软雅黑', Arial, sans-serif",
+                                weight: 'bold'
+                            },
+                            color: '#24292e'
+                        },
+                        tooltip: {
+                            ...chartOptions.plugins.tooltip,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    let idx = tooltipItems[0].dataIndex;
+                                    return {{ punishment_by_cause|map(attribute='cause_desc')|list|tojson }}[idx];
+                                },
+                                afterTitle: function(tooltipItems) {
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            {% endif %}
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

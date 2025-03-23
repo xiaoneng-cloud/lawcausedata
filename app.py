@@ -4,6 +4,9 @@ from flask_admin.contrib.sqla import ModelView
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from functools import wraps
+from sqlalchemy import func, distinct, case, literal
+from collections import Counter, defaultdict
+import json
 
 from config import Config
 from models import (
@@ -61,6 +64,21 @@ admin.add_view(SecureModelView(LegalCause, db.session, name='事由管理'))
 admin.add_view(SecureModelView(LegalPunishment, db.session, name='处罚管理'))
 admin.add_view(SecureModelView(User, db.session, name='用户管理'))
 
+# 添加辅助函数来获取处罚计数
+def get_punishment_count(regulation_id):
+    """获取特定法规的处罚总数"""
+    return db.session.query(LegalPunishment).\
+        join(LegalCause).\
+        filter(LegalCause.regulation_id == regulation_id).\
+        count()
+
+# 添加处罚计数辅助函数到应用上下文
+@app.context_processor
+def utility_processor():
+    return {
+        'get_punishment_count': get_punishment_count
+    }
+
 # 创建主页路由
 @app.route('/')
 def index():
@@ -99,8 +117,6 @@ def logout():
 def search_regulations():
     keyword = request.args.get('keyword', '')
     page = request.args.get('page', 1, type=int)
-    sort = request.args.get('sort', 'date')  # 默认按日期排序
-    direction = request.args.get('direction', 'desc')  # 默认降序排序
     per_page = 10
 
     query = LegalRegulation.query
@@ -108,22 +124,9 @@ def search_regulations():
         query = query.filter(
             db.or_(
                 LegalRegulation.name.like(f'%{keyword}%'),
-                LegalRegulation.issued_by.like(f'%{keyword}%'),
-                LegalRegulation.document_number.like(f'%{keyword}%')
+                LegalRegulation.source.like(f'%{keyword}%')
             )
         )
-    
-    # 排序逻辑
-    if sort == 'date':
-        if direction == 'asc':
-            query = query.order_by(LegalRegulation.issued_date.asc())
-        else:
-            query = query.order_by(LegalRegulation.issued_date.desc())
-    elif sort == 'name':
-        if direction == 'asc':
-            query = query.order_by(LegalRegulation.name.asc())
-        else:
-            query = query.order_by(LegalRegulation.name.desc())
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     regulations = pagination.items
@@ -131,9 +134,7 @@ def search_regulations():
     return render_template('regulations/list.html', 
                            regulations=regulations, 
                            pagination=pagination, 
-                           keyword=keyword,
-                           sort=sort,
-                           direction=direction)
+                           keyword=keyword)
 
 # 法规详情
 @app.route('/regulations/<int:regulation_id>')
@@ -150,6 +151,95 @@ def regulation_detail(regulation_id):
                            regulation=regulation, 
                            structures=structures,
                            causes=causes)
+
+# 新增统计图表路由
+@app.route('/regulations/<int:regulation_id>/stats')
+def regulation_stats(regulation_id):
+    regulation = LegalRegulation.query.get_or_404(regulation_id)
+    
+    # 获取统计数据
+    causes_count = LegalCause.query.filter_by(regulation_id=regulation_id).count()
+    structures_count = LegalStructure.query.filter_by(regulation_id=regulation_id).count()
+    
+    # 获取该法规的所有处罚
+    punishments = db.session.query(LegalPunishment).\
+        join(LegalCause).\
+        filter(LegalCause.regulation_id == regulation_id).\
+        all()
+    
+    punishments_count = len(punishments)
+    
+    # 处罚类型统计
+    punishment_types = []
+    if punishments:
+        type_counter = Counter()
+        for p in punishments:
+            if p.punishment_type:
+                # 分割处罚类型
+                types = [type_str.strip() for type_str in p.punishment_type.split('、')]
+                for t in types:
+                    if t:  # 确保不是空字符串
+                        type_counter[t] += 1
+            else:
+                type_counter["未指定"] += 1
+        
+        punishment_types = [{"type": t, "count": c} for t, c in type_counter.most_common()]
+    
+    # 处罚对象统计
+    punishment_targets = []
+    if punishments:
+        target_counter = Counter()
+        for p in punishments:
+            if p.punishment_target:
+                # 分割处罚对象
+                targets = [target_str.strip() for target_str in p.punishment_target.split('、')]
+                for t in targets:
+                    if t:  # 确保不是空字符串
+                        target_counter[t] += 1
+            else:
+                target_counter["未指定"] += 1
+        
+        punishment_targets = [{"target": t, "count": c} for t, c in target_counter.most_common()]
+    
+    # 事由与处罚关系统计（改为显示事由名称）
+    punishment_by_cause = []
+    if punishments:
+        cause_dict = {}
+        # 获取所有事由的信息
+        causes = LegalCause.query.filter_by(regulation_id=regulation_id).all()
+        for cause in causes:
+            # 使用事由描述而非编号
+            truncated_desc = cause.description[:30] + "..." if len(cause.description) > 30 else cause.description
+            cause_dict[cause.id] = {
+                "cause_code": cause.code,  # 保留编号但不展示
+                "cause_desc": truncated_desc,  # 使用事由名称
+                "count": 0
+            }
+        
+        # 计算每个事由的处罚数量
+        for p in punishments:
+            if p.cause_id in cause_dict:
+                cause_dict[p.cause_id]["count"] += 1
+        
+        # 过滤掉没有处罚的事由，并排序
+        punishment_by_cause = sorted(
+            [v for v in cause_dict.values() if v["count"] > 0],
+            key=lambda x: x["count"],
+            reverse=True
+        )
+        
+        # 如果事由太多，只展示前10个
+        if len(punishment_by_cause) > 10:
+            punishment_by_cause = punishment_by_cause[:10]
+    
+    return render_template('regulations/stats.html',
+                          regulation=regulation,
+                          causes_count=causes_count,
+                          structures_count=structures_count,
+                          punishments_count=punishments_count,
+                          punishment_types=punishment_types,
+                          punishment_targets=punishment_targets,
+                          punishment_by_cause=punishment_by_cause)
 
 # 事由详情
 @app.route('/causes/<int:cause_id>')
