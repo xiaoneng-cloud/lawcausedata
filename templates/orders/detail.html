@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案件详情 - 法律数据管理平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1a3c6e;        /* 深蓝色 - 代表专业、信任 */
+            --secondary-color: #f8f9fc;       /* 浅灰色背景 */
+            --accent-color: #c59c34;         /* 金色 - 代表天平、公正 */
+            --dark-color: #2c3e50;           /* 深色文字 */
+            --light-accent: #e9f0f7;         /* 浅蓝色强调 */
+            --success-color: #2e7d32;        /* 绿色 */
+            --warning-color: #ff8f00;        /* 橙色警告 */
+            --danger-color: #c62828;         /* 红色 */
+        }
+        
+        body {
+            font-family: 'Libre Baskerville', 'Times New Roman', serif;
+            background-color: var(--secondary-color);
+            color: var(--dark-color);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        
+        .nav-link {
+            font-weight: 600;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0c203e 100%);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50 L0 50 M50 50 L100 50 M50 50 L50 0 M50 50 L50 100' stroke='%23ffffff10' stroke-width='1'/%3E%3C/svg%3E");
+            opacity: 0.1;
+        }
+        
+        .page-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .page-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin-top: 10px;
+        }
+        
+        .badge-pending {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .badge-completed {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .badge-cancelled {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.3rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1rem 1.25rem;
+        }
+        
+        .card-header.bg-primary {
+            background-color: var(--primary-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-accent {
+            background-color: var(--accent-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header h5 {
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background-color: var(--light-accent);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-top: none;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(26, 60, 110, 0.03);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #102745;
+            border-color: #0d1f38;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0;
+        }
+        
+        /* 详情页样式增强 */
+        .case-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .detail-header {
+            position: relative;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.3rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .detail-header .badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+        
+        .detail-value {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-value.accent {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+        
+        .detail-meta-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-meta-icon {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+            width: 24px;
+            text-align: center;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: var(--light-accent);
+            color: var(--primary-color);
+        }
+        
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(26, 60, 110, 0.25);
+        }
+        
+        .supplier-card {
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(26, 60, 110, 0.02);
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .status-timeline {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 1rem;
+        }
+        
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 10px;
+            width: 2px;
+            background-color: var(--light-accent);
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            z-index: 1;
+        }
+        
+        .timeline-date {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .timeline-desc {
+            font-size: 0.9rem;
+        }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 20px;
+            padding: 0.5rem 1.25rem;
+            background-color: white;
+            border: 1px solid #d1d9e6;
+            color: var(--primary-color);
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-back:hover {
+            background-color: var(--light-accent);
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-briefcase-fill"></i> 法律数据管理平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house-fill"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/orders">
+                            <i class="bi bi-file-text-fill"></i> 案件管理
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <i class="bi bi-gear-fill"></i> 管理后台
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person-gear"></i> 个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h1 class="page-title">案件详情</h1>
+                    <p class="lead mb-0">查看案件详细信息及相关文档</p>
+                </div>
+                <div class="col-md-5 text-md-end">
+                    <a href="{{ url_for('order_list') }}" class="btn-back">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 案件基本信息 -->
+        <div class="detail-header">
+            {% if order.status == 'pending' %}
+            <span class="badge badge-pending">待处理</span>
+            {% elif order.status == 'completed' %}
+            <span class="badge badge-completed">已完成</span>
+            {% elif order.status == 'cancelled' %}
+            <span class="badge badge-cancelled">已取消</span>
+            {% else %}
+            <span class="badge bg-secondary">{{ order.status }}</span>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <h2 class="fs-3 mb-4">案件 #<span class="case-number">{{ order.order_number }}</span></h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-meta-item">
+                                <i class="bi bi-calendar3 detail-meta-icon"></i>
+                                <div>
+                                    <div class="detail-label">立案日期</div>
+                                    <div class="detail-value">{{ order.order_date.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-meta-item">
+                                <i class="bi bi-currency-yen detail-meta-icon"></i>
+                                <div>
+                                    <div class="detail-label">案件金额</div>
+                                    <div class="detail-value accent">¥{{ "%.2f"|format(order.total_amount) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if order.notes %}
+                    <div class="detail-meta-item">
+                        <i class="bi bi-chat-square-text detail-meta-icon"></i>
+                        <div>
+                            <div class="detail-label">案件备注</div>
+                            <div class="detail-value">{{ order.notes }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-accent">
+                            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i> 状态跟踪</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-date">{{ order.order_date.strftime('%Y-%m-%d') }}</div>
+                                    <div class="timeline-title">案件创建</div>
+                                    <div class="timeline-desc">案件已成功创建并进入系统</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-date">{{ (order.order_date.replace(day=order.order_date.day+1)).strftime('%Y-%m-%d') }}</div>
+                                    <div class="timeline-title">初步审核</div>
+                                    <div class="timeline-desc">案件材料正在审核中</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-date">{{ (order.order_date.replace(day=order.order_date.day+3)).strftime('%Y-%m-%d') }}</div>
+                                    <div class="timeline-title">{% if order.status == 'completed' %}已完成{% else %}处理中{% endif %}</div>
+                                    <div class="timeline-desc">{% if order.status == 'completed' %}案件已完成并归档{% else %}案件正在处理中{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 案件文档信息 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i> 案件文档</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>文档名称</th>
+                                <th>单价</th>
+                                <th>数量</th>
+                                <th>小计</th>
+                                <th>类别</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for info in products_info %}
+                            <tr>
+                                <td>
+                                    <div class="product-name">{{ info.product.name }}</div>
+                                    <small class="text-muted">{{ info.product.description }}</small>
+                                </td>
+                                <td>¥{{ "%.2f"|format(info.order_item.price) }}</td>
+                                <td>{{ info.order_item.quantity }}</td>
+                                <td>¥{{ "%.2f"|format(info.order_item.price * info.order_item.quantity) }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ info.product.category.name if info.product.category else info.product.category_id }}</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="bi bi-file-earmark-x fs-2 d-block mb-2 text-muted"></i>
+                                    此案件没有文档信息
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 客户信息 -->
+        <div class="card">
+            <div class="card-header bg-primary">
+                <h5 class="mb-0"><i class="bi bi-building me-2"></i> 客户信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="supplierAccordion">
+                    {% for info in products_info %}
+                    <div class="accordion-item supplier-card mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#supplier{{ loop.index }}">
+                                <i class="bi bi-person-vcard me-2"></i> {{ info.product.name }} - {{ info.supplier.name }}
+                            </button>
+                        </h2>
+                        <div id="supplier{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#supplierAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="detail-meta-item">
+                                            <i class="bi bi-building detail-meta-icon"></i>
+                                            <div>
+                                                <div class="detail-label">客户单位</div>
+                                                <div class="detail-value">{{ info.supplier.name }}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="detail-meta-item">
+                                            <i class="bi bi-person detail-meta-icon"></i>
+                                            <div>
+                                                <div class="detail-label">联系人</div>
+                                                <div class="detail-value">{{ info.supplier.contact_person }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="detail-meta-item">
+                                            <i class="bi bi-envelope detail-meta-icon"></i>
+                                            <div>
+                                                <div class="detail-label">电子邮箱</div>
+                                                <div class="detail-value">{{ info.supplier.email }}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="detail-meta-item">
+                                            <i class="bi bi-telephone detail-meta-icon"></i>
+                                            <div>
+                                                <div class="detail-label">联系电话</div>
+                                                <div class="detail-value">{{ info.supplier.phone }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-meta-item">
+                                    <i class="bi bi-geo-alt detail-meta-icon"></i>
+                                    <div>
+                                        <div class="detail-label">地址</div>
+                                        <div class="detail-value">{{ info.supplier.address }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-envelope"></i> 发送邮件
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="bi bi-telephone"></i> 拨打电话
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-exclamation-circle fs-2 d-block mb-2 text-muted"></i>
+                        <p class="mb-0">暂无客户信息</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('order_list') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+            <div>
+                <button class="btn btn-primary">
+                    <i class="bi bi-printer"></i> 打印案件
+                </button>
+                <div class="btn-group ms-2">
+                    <button class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> 编辑
+                    </button>
+                    <button class="btn btn-outline-danger">
+                        <i class="bi bi-archive"></i> 归档
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 法律数据管理平台. 保留所有权利.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">基于 Flask 和 Bootstrap 5 构建</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

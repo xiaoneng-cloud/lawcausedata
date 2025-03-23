@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ regulation.name }} - 法律法规详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1a3c6e;
+            --secondary-color: #f8f9fc;
+            --accent-color: #c59c34;
+            --dark-color: #2c3e50;
+            --light-accent: #e9f0f7;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --border-radius: 8px;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        
+        .back-button i {
+            margin-right: 6px;
+        }
+        
+        .header-wrapper {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0c203e 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(25deg);
+        }
+        
+        .regulation-header {
+            color: white;
+            padding: 2.5rem 1.5rem;
+            border-radius: 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .regulation-title {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .metadata-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .metadata-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .metadata-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .metadata-item i {
+            color: var(--accent-color);
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 50px;
+            background-color: var(--light-accent);
+            color: var(--primary-color);
+            margin-left: 8px;
+        }
+        
+        .nav-tabs {
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-tabs .nav-item {
+            margin-right: 0.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(26, 60, 110, 0.2);
+        }
+        
+        .tab-content {
+            background: transparent;
+            border-radius: var(--border-radius);
+        }
+        
+        .article-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            border: none;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .article-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .article-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background-color: var(--primary-color);
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        
+        .article-content {
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        
+        .cause-item {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            border: none;
+            transition: var(--transition);
+        }
+        
+        .cause-item:hover {
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .cause-header {
+            background-color: white;
+            border: none;
+            padding: 0;
+        }
+        
+        .cause-button {
+            padding: 1.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background-color: white;
+            border-radius: var(--border-radius);
+            position: relative;
+            padding-right: 3rem;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: none;
+        }
+        
+        .cause-button:hover {
+            color: var(--accent-color);
+        }
+        
+        .cause-button::after {
+            content: '\F282';
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: var(--transition);
+            color: var(--primary-color);
+        }
+        
+        .cause-button[aria-expanded="true"]::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+        
+        .cause-content {
+            padding: 1.2rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            background-color: #fafbfc;
+        }
+        
+        .info-group {
+            margin-bottom: 1rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+        }
+        
+        .punishment-table {
+            margin-top: 1.2rem;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .punishment-table thead {
+            background-color: #f8f9fa;
+        }
+        
+        .punishment-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .punishment-table td {
+            padding: 0.8rem 1rem;
+            vertical-align: middle;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(26, 60, 110, 0.05);
+        }
+        
+        .empty-state {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        footer {
+            background-color: white;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        footer p {
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .regulation-title {
+                font-size: 1.5rem;
+            }
+            
+            .metadata-row {
+                flex-direction: column;
+            }
+            
+            .metadata-col {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .metadata-col:last-child {
+                margin-bottom: 0;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .article-title {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-wrapper">
+        <div class="app-container">
+            <div class="regulation-header">
+                <a href="{{ url_for('search_regulations') }}" class="back-button">
+                    <i class="bi bi-arrow-left"></i> 返回列表
+                </a>
+                <h2 class="regulation-title text-center">{{ regulation.name }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="metadata-card">
+            <div class="row metadata-row">
+                <div class="col-md-6 metadata-col">
+                    <div class="metadata-item">
+                        <i class="bi bi-building"></i>
+                        <span class="info-label">来源：</span>
+                        <span class="info-value">{{ regulation.source or '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="bi bi-tag"></i>
+                        <span class="info-label">状态：</span>
+                        <span class="info-value">
+                            <span class="status-badge">{{ regulation.status }}</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6 metadata-col">
+                    <div class="metadata-item">
+                        <i class="bi bi-calendar-event"></i>
+                        <span class="info-label">发布日期：</span>
+                        <span class="info-value">{{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '未知' }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="info-label">生效日期：</span>
+                        <span class="info-value">{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="regulationTabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="articles-tab" data-bs-toggle="tab" href="#legal-articles">
+                    <i class="bi bi-book me-1"></i> 法规条文
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="causes-tab" data-bs-toggle="tab" href="#legal-causes">
+                    <i class="bi bi-list-check me-1"></i> 事由列表 
+                    <span class="badge bg-light text-dark ms-1">{{ causes|length }}</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- 法规条文 -->
+            <div class="tab-pane fade show active" id="legal-articles">
+                {% for structure in structures %}
+                <div class="article-card">
+                    <div class="card-body">
+                        <h5 class="article-title">
+                            第{{ structure.article }}条 
+                            {% if structure.paragraph %}第{{ structure.paragraph }}款{% endif %}
+                        </h5>
+                        <p class="article-content">{{ structure.content }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- 事由列表 -->
+            <div class="tab-pane fade" id="legal-causes">
+                <div class="accordion" id="causesAccordion">
+                    {% for cause in causes %}
+                    <div class="cause-item">
+                        <div class="cause-header" id="heading{{ cause.id }}">
+                            <button class="cause-button w-100 text-start" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse{{ cause.id }}"
+                                    aria-expanded="false" 
+                                    aria-controls="collapse{{ cause.id }}">
+                                {{ cause.description }}
+                            </button>
+                        </div>
+
+                        <div id="collapse{{ cause.id }}" class="collapse" 
+                             aria-labelledby="heading{{ cause.id }}" 
+                             data-bs-parent="#causesAccordion">
+                            <div class="cause-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <span class="info-label">事由：</span>
+                                            <span class="info-value">{{ cause.description }}</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">违则：</span>
+                                            <span class="info-value">{{ cause.violation_type or '未知' }}</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">违则条款：</span>
+                                            <span class="info-value">{{ cause.violation_clause or '未知' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <span class="info-label">行为：</span>
+                                            <span class="info-value">{{ cause.behavior or '未知' }}</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">违法行为：</span>
+                                            <span class="info-value">{{ cause.illegal_behavior or '未知' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 处罚措施表格 -->
+                                <table class="table table-sm table-hover punishment-table">
+                                    <thead>
+                                        <tr>
+                                            <th>情形</th>
+                                            <th>处罚类型</th>
+                                            <th>行业</th>
+                                            <th>处罚对象</th>
+                                            <th>处罚明细</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for punishment in cause.punishments %}
+                                        <tr>
+                                            <td>{{ punishment.circumstance or '未知' }}</td>
+                                            <td>{{ punishment.punishment_type or '未知' }}</td>
+                                            <td>{{ punishment.industry or '未知' }}</td>
+                                            <td>{{ punishment.punishment_target or '未知' }}</td>
+                                            <td>{{ punishment.punishment_details or '未知' }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">暂无处罚信息</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>暂无法律事由信息</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="app-container">
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="text-muted mb-0">© 2025 法律法规管理平台</p>
+                <div>
+                    <a href="#" class="text-muted me-3">
+                        <i class="bi bi-question-circle"></i> 帮助
+                    </a>
+                    <a href="#" class="text-muted">
+                        <i class="bi bi-envelope"></i> 反馈
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
