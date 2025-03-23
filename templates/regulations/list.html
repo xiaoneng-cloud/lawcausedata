@@ -525,44 +525,26 @@
             </div>
 
             {% if regulations %}
+            <!-- 法规列表表格 -->
             <div class="regulations-table">
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>名称</th>
-                            <th style="width: 15%;">
-                                <a href="{{ url_for('search_regulations', sort='date', keyword=keyword) }}" class="sort-link">
-                                    发布日期
-                                    {% if sort == 'date' %}
-                                        {% if direction == 'asc' %}
-                                        <i class="bi bi-arrow-up-short sort-icon"></i>
-                                        {% else %}
-                                        <i class="bi bi-arrow-down-short sort-icon"></i>
-                                        {% endif %}
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th style="width: 15%;">实施日期</th>
-                            <th style="width: 15%;">效力位阶</th>
-                            <th style="width: 15%;">有效性</th>
+                            <th>法规名称</th>
+                            <th style="width: 15%;">批准日期</th>
+                            <th style="width: 15%;">生效日期</th>
+                            <th style="width: 15%;">效力级别</th>
+                            <th style="width: 15%;">地区</th>
                             <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for regulation in regulations %}
                         <tr>
-                            <td>
-                                <div>
-                                    <span class="hierarchy-level">
-                                        {{ regulation.hierarchy_level or '国务院' }}
-                                    </span>
-                                </div>
+                            <td>                               
                                 <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" class="regulation-name">
                                     {{ regulation.name }}
-                                </a>
-                                <div class="text-secondary small mt-1">
-                                    {{ regulation.document_number or '发布文号未知' }}
-                                </div>
+                                </a>                                
                             </td>
                             <td>
                                 {{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '未知' }}
@@ -574,21 +556,11 @@
                                 {{ regulation.hierarchy_level or '未知' }}
                             </td>
                             <td>
-                                {% if regulation.validity == '现行有效' %}
-                                <span class="badge badge-status badge-active">现行有效</span>
-                                {% elif regulation.validity == '已修改' %}
-                                <span class="badge badge-status badge-modified">已修改</span>
-                                {% elif regulation.validity == '已废止' %}
-                                <span class="badge badge-status badge-expired">已废止</span>
-                                {% elif regulation.validity == '尚未生效' %}
-                                <span class="badge badge-status badge-pending">尚未生效</span>
-                                {% else %}
-                                <span class="badge badge-status badge-active">现行有效</span>
-                                {% endif %}
+                                {{ regulation.province or '' }}{% if regulation.province and regulation.city %} - {% endif %}{{ regulation.city or '' }}
                             </td>
                             <td>
                                 <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" 
-                                   class="detail-btn">
+                                class="detail-btn">
                                     查看 <i class="bi bi-arrow-right"></i>
                                 </a>
                             </td>

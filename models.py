@@ -26,16 +26,18 @@ class User(UserMixin, db.Model):
 class LegalRegulation(db.Model):
     """法律法规主表"""
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, unique=True)
-    issued_by = db.Column(db.String(100))  # 发布部门（原source字段重命名）
-    document_number = db.Column(db.String(100))  # 发布文号
-    issued_date = db.Column(db.DateTime)  # 发布日期
+    name = db.Column(db.String(200), nullable=False, unique=True)  # 法规名称
+    document_number = db.Column(db.String(100))  # 文号
+    issued_by = db.Column(db.String(100))  # 通过机构
+    approved_by = db.Column(db.String(100))  # 批准机构
+    issued_date = db.Column(db.DateTime)  # 批准日期
     effective_date = db.Column(db.DateTime)  # 生效日期
+    revision_date = db.Column(db.DateTime)  # 修订日期
     
     # 新增字段
-    hierarchy_level = db.Column(db.String(50))  # 效力位阶
-    industry_category = db.Column(db.String(100))  # 行业类别
-    validity = db.Column(db.String(20), default='现行有效')  # 有效性：尚未生效、现行有效、已修改、已废止
+    hierarchy_level = db.Column(db.String(50))  # 效力级别
+    province = db.Column(db.String(50))  # 省
+    city = db.Column(db.String(50))  # 市
     
     status = db.Column(db.String(20), default='active')  # 状态：active, archived
     

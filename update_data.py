@@ -1,9 +1,9 @@
 """
 法律法规数据更新脚本
 实现功能：
-1. 从四个Excel文件读取最新数据
-2. 使用自定义表头从law_info.xlsx读取法规基础信息
-3. 当遇到同名法规时，删除旧数据并导入新数据
+1. 从三个Excel文件读取最新数据
+2. 当遇到同名法规时，删除旧数据并导入新数据
+3. 保留新增的法规数据
 """
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,80 +25,48 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_regulation_info(info_file):
-    """
-    从基础信息Excel文件中加载所有法规基础信息
-    :param info_file: 法规基础信息Excel文件路径
-    :return: 以法规名称为键的字典，包含每个法规的基础信息
-    """
+def process_regulation_data(sheet_name, xls_structure):
+    """处理法规基本数据，返回新的法规对象"""
     try:
-        # 读取基础信息Excel
-        df_info = pd.read_excel(info_file)
+        # 尝试获取第一行数据，用于提取法规基本信息
+        df_meta = pd.read_excel(xls_structure, sheet_name=sheet_name, nrows=1)
         
-        # 创建一个以法规名称为键的字典
-        regulation_info = {}
-        for _, row in df_info.iterrows():
-            # 获取法规名称（第一列）
-            name = row.get('法规名称', None)
-            if pd.isna(name) or not name:
-                continue
-                
-            # 提取所有需要的字段，使用您提供的表头
-            info = {
-                'name': str(name),
-                'document_number': str(row.get('文号', '')) if pd.notna(row.get('文号', None)) else '',
-                'issued_by': str(row.get('通过机构', '')) if pd.notna(row.get('通过机构', None)) else '',
-                'approved_by': str(row.get('批准机构', '')) if pd.notna(row.get('批准机构', None)) else '',
-                'hierarchy_level': str(row.get('效力级别', '')) if pd.notna(row.get('效力级别', None)) else '',
-                'province': str(row.get('省', '')) if pd.notna(row.get('省', None)) else '',
-                'city': str(row.get('市', '')) if pd.notna(row.get('市', None)) else '',
-                'status': 'active'
-            }
-            
-            # 处理日期字段
-            date_fields = {
-                '批准日期': 'issued_date',
-                '生效日期': 'effective_date',
-                '修订日期': 'revision_date'
-            }
-            
-            for excel_field, model_field in date_fields.items():
-                if excel_field in row and pd.notna(row[excel_field]):
-                    date_value = row[excel_field]
-                    if isinstance(date_value, str):
-                        try:
-                            info[model_field] = datetime.strptime(date_value, '%Y年%m月%d日')
-                        except:
-                            try:
-                                info[model_field] = datetime.strptime(date_value, '%Y-%m-%d')
-                            except:
-                                pass
-                    elif isinstance(date_value, datetime):
-                        info[model_field] = date_value
-            
-            regulation_info[str(name)] = info
-            
-        logger.info(f"从基础信息Excel中加载了 {len(regulation_info)} 条法规信息")
-        return regulation_info
-    except Exception as e:
-        logger.error(f"加载法规基础信息时出错: {str(e)}")
-        return {}
-
-def process_regulation_data(sheet_name, regulation_info):
-    """
-    处理法规基本数据，返回新的法规对象数据
-    :param sheet_name: 工作表名称（法规名称）
-    :param regulation_info: 从基础信息Excel加载的法规信息字典
-    :return: 法规数据字典
-    """
-    try:
-        # 从基础信息中查找该法规
-        if sheet_name in regulation_info:
-            return regulation_info[sheet_name]
-        else:
-            # 如果在基础信息中找不到该法规，返回只包含名称的基本信息
-            logger.warning(f"在基础信息中未找到法规 {sheet_name}")
-            return {'name': sheet_name, 'status': 'active'}
+        # 构建法规基本信息
+        regulation_data = {
+            'name': sheet_name,
+            # 如果Excel中包含这些列，则提取它们的值
+            'issued_by': df_meta.get('发布部门', [''])[0] if '发布部门' in df_meta else '',
+            'document_number': df_meta.get('发布文号', [''])[0] if '发布文号' in df_meta else '',
+            'hierarchy_level': df_meta.get('效力位阶', [''])[0] if '效力位阶' in df_meta else '',
+            'industry_category': df_meta.get('行业类别', [''])[0] if '行业类别' in df_meta else '',
+            'validity': df_meta.get('有效性', ['现行有效'])[0] if '有效性' in df_meta else '现行有效',
+            'status': 'active'
+        }
+        
+        # 处理日期字段
+        if '发布日期' in df_meta:
+            issued_date = df_meta['发布日期'][0]
+            if pd.notna(issued_date):
+                if isinstance(issued_date, str):
+                    try:
+                        regulation_data['issued_date'] = datetime.strptime(issued_date, '%Y-%m-%d')
+                    except:
+                        pass
+                elif isinstance(issued_date, datetime):
+                    regulation_data['issued_date'] = issued_date
+        
+        if '生效日期' in df_meta:
+            effective_date = df_meta['生效日期'][0]
+            if pd.notna(effective_date):
+                if isinstance(effective_date, str):
+                    try:
+                        regulation_data['effective_date'] = datetime.strptime(effective_date, '%Y-%m-%d')
+                    except:
+                        pass
+                elif isinstance(effective_date, datetime):
+                    regulation_data['effective_date'] = effective_date
+        
+        return regulation_data
     except Exception as e:
         logger.error(f"处理法规 {sheet_name} 基本数据时出错: {str(e)}")
         # 返回只包含名称的基本信息
@@ -169,10 +137,9 @@ def delete_regulation_cascade(regulation_name):
         logger.error(f"删除法规 {regulation_name} 时出错: {str(e)}")
         return False
 
-def update_legal_data(info_file, structure_file, cause_file, punish_file):
+def update_legal_data(structure_file, cause_file, punish_file):
     """
     更新法律法规数据
-    :param info_file: 法规基础信息Excel文件路径
     :param structure_file: 法规结构Excel文件路径
     :param cause_file: 法规事由Excel文件路径
     :param punish_file: 法规处罚Excel文件路径
@@ -182,9 +149,6 @@ def update_legal_data(info_file, structure_file, cause_file, punish_file):
         xls_structure = pd.ExcelFile(structure_file)
         xls_cause = pd.ExcelFile(cause_file)
         xls_punish = pd.ExcelFile(punish_file)
-        
-        # 加载法规基础信息
-        regulation_info = load_regulation_info(info_file)
         
         # 获取所有法规名称（从结构Excel的sheet名称获取）
         regulation_names = xls_structure.sheet_names
@@ -201,7 +165,7 @@ def update_legal_data(info_file, structure_file, cause_file, punish_file):
                     delete_regulation_cascade(sheet_name)
                 
                 # 获取法规基本信息
-                regulation_data = process_regulation_data(sheet_name, regulation_info)
+                regulation_data = process_regulation_data(sheet_name, xls_structure)
                 
                 # 创建新法规
                 regulation = LegalRegulation(**regulation_data)
@@ -272,7 +236,6 @@ def update_legal_data(info_file, structure_file, cause_file, punish_file):
 
 def main():
     """主函数"""
-    info_file = 'data/law_info.xlsx'
     structure_file = 'data/law_structure.xlsx'
     cause_file = 'data/law_cause.xlsx'
     punish_file = 'data/law_punish.xlsx'
@@ -281,7 +244,7 @@ def main():
     
     with app.app_context():
         try:
-            update_legal_data(info_file, structure_file, cause_file, punish_file)
+            update_legal_data(structure_file, cause_file, punish_file)
             logger.info("法律法规数据更新完成")
         except Exception as e:
             logger.error(f"数据更新过程中出错: {str(e)}")
