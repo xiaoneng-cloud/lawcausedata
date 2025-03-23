@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>法规列表 - 法律法规管理平台</title>
+    <title>法律法规 - 法律法规管理平台</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -143,73 +143,80 @@
             padding: 3rem 0;
         }
         
-        .regulations-wrapper {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        
-        .regulation-card {
+        /* 新的表格样式 - 参考盘古行政法典 */
+        .regulations-table {
             background-color: white;
             border-radius: var(--border-radius);
-            border: none;
-            border-left: 4px solid var(--primary-color);
             box-shadow: var(--card-shadow);
-            transition: var(--transition);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
         
-        .regulation-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        }
-        
-        .card-body {
-            flex: 1;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .card-title {
-            color: var(--primary-color);
+        .regulations-table th {
+            background-color: #f8f9fa;
             font-weight: 600;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            line-height: 1.4;
+            color: var(--primary-color);
+            border-top: none;
+            padding: 1rem;
         }
         
-        .card-title i {
-            color: var(--accent-color);
-            margin-right: 8px;
+        .regulations-table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: #f0f0f0;
         }
         
-        .card-footer {
-            background-color: #f9fafc;
-            border-top: 1px solid #edf2f7;
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .regulations-table tr {
+            transition: var(--transition);
+        }
+        
+        .regulations-table tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        .badge-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.75rem;
         }
         
         .badge-active {
-            background-color: var(--light-accent);
-            color: var(--primary-color);
-            padding: 0.5rem 0.8rem;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 0.8rem;
-            display: inline-flex;
-            align-items: center;
+            background-color: #e8f5e9;
+            color: #2e7d32;
         }
         
-        .badge-active i {
-            margin-right: 5px;
+        .badge-modified {
+            background-color: #fff8e1;
+            color: #ff8f00;
+        }
+        
+        .badge-expired {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .badge-pending {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .hierarchy-level {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.3rem;
+        }
+        
+        .regulation-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .regulation-name:hover {
+            color: var(--accent-color);
         }
         
         .detail-btn {
@@ -277,6 +284,61 @@
             color: white;
         }
         
+        /* 排序相关样式 */
+        .sort-link {
+            color: inherit;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .sort-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+        
+        /* 筛选栏样式 */
+        .filter-bar {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 1rem;
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .filter-badge {
+            background-color: #f5f5f5;
+            color: var(--text-primary);
+            border-radius: 50px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .filter-badge:hover, .filter-badge.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
         footer {
             background-color: var(--dark-color);
             color: white;
@@ -330,10 +392,6 @@
                 margin-top: -1.5rem;
             }
             
-            .regulations-wrapper {
-                grid-template-columns: 1fr;
-            }
-            
             .footer-content {
                 flex-direction: column;
                 text-align: center;
@@ -345,6 +403,15 @@
             
             .footer-links a {
                 margin: 0 0.75rem;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-label {
+                margin-bottom: 0.5rem;
             }
         }
     </style>
@@ -367,7 +434,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="/search/regulations">
-                            <i class="bi bi-search"></i> 法规搜索
+                            <i class="bi bi-search"></i> 法律法规
                         </a>
                     </li>
                     <li class="nav-item">
@@ -404,7 +471,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h1 class="page-title">法规搜索</h1>
+                    <h1 class="page-title">法律法规</h1>
                     <p class="lead text-white-50">
                         精准检索全部法律法规，快速定位所需信息
                     </p>
@@ -433,6 +500,23 @@
 
     <section class="content-section">
         <div class="container">
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <span class="filter-label">排序:</span>
+                <div class="filter-options">
+                    <a href="{{ url_for('search_regulations', sort='date', direction='desc', keyword=keyword) }}" class="filter-badge {% if sort == 'date' and direction == 'desc' %}active{% endif %}">
+                        发布日期 <i class="bi bi-arrow-down"></i>
+                    </a>
+                    <a href="{{ url_for('search_regulations', sort='date', direction='asc', keyword=keyword) }}" class="filter-badge {% if sort == 'date' and direction == 'asc' %}active{% endif %}">
+                        发布日期 <i class="bi bi-arrow-up"></i>
+                    </a>
+                    <a href="{{ url_for('search_regulations', sort='name', direction='asc', keyword=keyword) }}" class="filter-badge {% if sort == 'name' and direction == 'asc' %}active{% endif %}">
+                        名称 A-Z
+                    </a>
+                </div>
+            </div>
+
+            <!-- 法规列表表格 -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="h4 mb-0">搜索结果</h2>
                 {% if keyword %}
@@ -441,32 +525,77 @@
             </div>
 
             {% if regulations %}
-            <div class="regulations-wrapper">
-                {% for regulation in regulations %}
-                <div class="regulation-card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-journal-text"></i>{{ regulation.name }}
-                        </h5>
-                        
-                        <div class="mt-auto pt-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-calendar-date text-secondary me-2"></i>
-                                <span class="text-secondary small">{{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '未知' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <span class="badge-active">
-                            <i class="bi bi-check-circle"></i>{{ regulation.status }}
-                        </span>
-                        <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" 
-                           class="detail-btn">
-                            查看详情 <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
+            <div class="regulations-table">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th style="width: 15%;">
+                                <a href="{{ url_for('search_regulations', sort='date', keyword=keyword) }}" class="sort-link">
+                                    发布日期
+                                    {% if sort == 'date' %}
+                                        {% if direction == 'asc' %}
+                                        <i class="bi bi-arrow-up-short sort-icon"></i>
+                                        {% else %}
+                                        <i class="bi bi-arrow-down-short sort-icon"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th style="width: 15%;">实施日期</th>
+                            <th style="width: 15%;">效力位阶</th>
+                            <th style="width: 15%;">有效性</th>
+                            <th style="width: 10%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for regulation in regulations %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <span class="hierarchy-level">
+                                        {{ regulation.hierarchy_level or '国务院' }}
+                                    </span>
+                                </div>
+                                <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" class="regulation-name">
+                                    {{ regulation.name }}
+                                </a>
+                                <div class="text-secondary small mt-1">
+                                    {{ regulation.document_number or '发布文号未知' }}
+                                </div>
+                            </td>
+                            <td>
+                                {{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '未知' }}
+                            </td>
+                            <td>
+                                {{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}
+                            </td>
+                            <td>
+                                {{ regulation.hierarchy_level or '未知' }}
+                            </td>
+                            <td>
+                                {% if regulation.validity == '现行有效' %}
+                                <span class="badge badge-status badge-active">现行有效</span>
+                                {% elif regulation.validity == '已修改' %}
+                                <span class="badge badge-status badge-modified">已修改</span>
+                                {% elif regulation.validity == '已废止' %}
+                                <span class="badge badge-status badge-expired">已废止</span>
+                                {% elif regulation.validity == '尚未生效' %}
+                                <span class="badge badge-status badge-pending">尚未生效</span>
+                                {% else %}
+                                <span class="badge badge-status badge-active">现行有效</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" 
+                                   class="detail-btn">
+                                    查看 <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             {% else %}
             <div class="empty-state">

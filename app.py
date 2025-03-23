@@ -99,6 +99,8 @@ def logout():
 def search_regulations():
     keyword = request.args.get('keyword', '')
     page = request.args.get('page', 1, type=int)
+    sort = request.args.get('sort', 'date')  # 默认按日期排序
+    direction = request.args.get('direction', 'desc')  # 默认降序排序
     per_page = 10
 
     query = LegalRegulation.query
@@ -106,9 +108,22 @@ def search_regulations():
         query = query.filter(
             db.or_(
                 LegalRegulation.name.like(f'%{keyword}%'),
-                LegalRegulation.source.like(f'%{keyword}%')
+                LegalRegulation.issued_by.like(f'%{keyword}%'),
+                LegalRegulation.document_number.like(f'%{keyword}%')
             )
         )
+    
+    # 排序逻辑
+    if sort == 'date':
+        if direction == 'asc':
+            query = query.order_by(LegalRegulation.issued_date.asc())
+        else:
+            query = query.order_by(LegalRegulation.issued_date.desc())
+    elif sort == 'name':
+        if direction == 'asc':
+            query = query.order_by(LegalRegulation.name.asc())
+        else:
+            query = query.order_by(LegalRegulation.name.desc())
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     regulations = pagination.items
@@ -116,7 +131,9 @@ def search_regulations():
     return render_template('regulations/list.html', 
                            regulations=regulations, 
                            pagination=pagination, 
-                           keyword=keyword)
+                           keyword=keyword,
+                           sort=sort,
+                           direction=direction)
 
 # 法规详情
 @app.route('/regulations/<int:regulation_id>')

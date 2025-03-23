@@ -27,9 +27,16 @@ class LegalRegulation(db.Model):
     """法律法规主表"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, unique=True)
-    source = db.Column(db.String(100))  # 法规来源
+    issued_by = db.Column(db.String(100))  # 发布部门（原source字段重命名）
+    document_number = db.Column(db.String(100))  # 发布文号
     issued_date = db.Column(db.DateTime)  # 发布日期
     effective_date = db.Column(db.DateTime)  # 生效日期
+    
+    # 新增字段
+    hierarchy_level = db.Column(db.String(50))  # 效力位阶
+    industry_category = db.Column(db.String(100))  # 行业类别
+    validity = db.Column(db.String(20), default='现行有效')  # 有效性：尚未生效、现行有效、已修改、已废止
+    
     status = db.Column(db.String(20), default='active')  # 状态：active, archived
     
     # 关联条文
