@@ -26,6 +26,16 @@
             color: var(--text-primary);
             line-height: 1.6;
         }
+        .clause-segment {
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+        margin-bottom: 5px;
+        }
+        
+        .clause-segment:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
         
         .app-container {
             max-width: 1200px;
@@ -497,20 +507,45 @@
                                     <h6 class="cause-section-title"><i class="bi bi-check-circle me-2"></i>依据</h6>
                                     <div class="cause-section-content">
                                         {% if cause.behavior == cause.penalty_type %}
-                                            {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}
+                                            {% if cause.penalty_type and cause.penalty_clause and '|' in cause.penalty_type and '|' in cause.penalty_clause %}
+                                                {% set p_types = cause.penalty_type.split('|') %}
+                                                {% set p_clauses = cause.penalty_clause.split('|') %}
+                                                {% for i in range(p_types|length) %}
+                                                    <div class="clause-pair">
+                                                        <strong>{{ p_types[i] | trim }}</strong> 
+                                                        {{ p_clauses[i] | trim if i < p_clauses|length else '' }}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <strong>{{ cause.penalty_type or '' }}</strong> {{ cause.penalty_clause or '' }}
+                                            {% endif %}
                                         {% else %}
-                                            {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}<br>
-                                            {{ cause.behavior or '' }}{{ cause.illegal_behavior or '' }}
+                                            {% if cause.penalty_type and cause.penalty_clause and '|' in cause.penalty_type and '|' in cause.penalty_clause %}
+                                                {% set p_types = cause.penalty_type.split('|') %}
+                                                {% set p_clauses = cause.penalty_clause.split('|') %}
+                                                {% for i in range(p_types|length) %}
+                                                    <div class="clause-pair">
+                                                        <strong>{{ p_types[i] | trim }}</strong> 
+                                                        {{ p_clauses[i] | trim if i < p_clauses|length else '' }}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <strong>{{ cause.penalty_type or '' }}</strong> {{ cause.penalty_clause or '' }}
+                                            {% endif %}
+                                            
+                                        <br>   
+                                        <strong>{{ cause.behavior or '' }}</strong>{{ cause.illegal_behavior or '' }}
                                         {% endif %}
                                     </div>
                                 </div>
+                                
                                 
                                 <!-- 违则信息 -->
                                 {% if cause.behavior != cause.violation_type %}
                                 <div class="cause-section">
                                     <h6 class="cause-section-title"><i class="bi bi-exclamation-triangle me-2"></i>违则</h6>
                                     <div class="cause-section-content">
-                                        {{ cause.violation_type or '' }} {{ cause.violation_clause or '' }}
+                                        <strong>{{ cause.violation_type or '' }}</strong> {{ cause.violation_clause or '' }}
                                     </div>
                                 </div>
                                 {% endif %}
