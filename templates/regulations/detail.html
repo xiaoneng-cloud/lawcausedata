@@ -500,7 +500,7 @@
                                             {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}
                                         {% else %}
                                             {{ cause.penalty_type or '' }} {{ cause.penalty_clause or '' }}<br>
-                                            {{ cause.behavior or '' }}
+                                            {{ cause.behavior or '' }}{{ cause.illegal_behavior or '' }}
                                         {% endif %}
                                     </div>
                                 </div>
