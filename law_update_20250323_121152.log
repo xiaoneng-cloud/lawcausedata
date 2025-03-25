@@ -1,3 +1,0 @@
-2025-03-23 12:11:52,459 - INFO - 开始更新法律法规数据
-2025-03-23 12:11:52,461 - ERROR - 更新法律法规数据时出错: [Errno 2] No such file or directory: 'data/law_structure.xlsx'
-2025-03-23 12:11:52,461 - ERROR - 数据更新过程中出错: [Errno 2] No such file or directory: 'data/law_structure.xlsx'

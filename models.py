@@ -102,3 +102,4 @@ class LegalPunishment(db.Model):
     
     # 反向关联
     cause = relationship('LegalCause', back_populates='punishments')
+

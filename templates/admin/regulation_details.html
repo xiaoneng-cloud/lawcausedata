@@ -1,0 +1,20 @@
+{% extends 'admin/model/details.html' %}
+
+{% block details_content %}
+    {{ super() }}
+    <div class="row">
+        <div class="col-md-12">
+            <h4>关联数据:</h4>
+            <ul>
+                <li>包含 {{ model.structures|length }} 条法律条文</li>
+                <li>包含 {{ model.causes|length }} 个事由</li>
+                
+                {% set punishment_count = namespace(total=0) %}
+                {% for cause in model.causes %}
+                    {% set punishment_count.total = punishment_count.total + cause.punishments|length %}
+                {% endfor %}
+                <li>共关联 {{ punishment_count.total }} 条处罚信息</li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
