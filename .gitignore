@@ -1,0 +1,15 @@
+# 忽略Python编译文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 忽略数据库文件
+instance/
+*.sqlite3
+
+# 忽略日志文件
+*.log
+
+# 忽略本地配置
+.env
+local_settings.py
