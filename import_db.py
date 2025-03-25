@@ -274,10 +274,10 @@ def update_legal_data(info_file, structure_file, cause_file, punish_file):
 
 def main():
     """主函数"""
-    info_file = 'law_info.xlsx'
-    structure_file = 'law_structure.xlsx'
-    cause_file = 'law_cause.xlsx'
-    punish_file = 'law_punish.xlsx'
+    info_file = 'data/law_info.xlsx'
+    structure_file = 'data/law_structure.xlsx'
+    cause_file = 'data/law_cause.xlsx'
+    punish_file = 'data/law_punish.xlsx'
     
     logger.info("开始更新法律法规数据")
     
