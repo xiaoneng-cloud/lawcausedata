@@ -440,6 +440,51 @@ def cause_detail(cause_id):
                            cause=cause, 
                            punishments=punishments)
 
+@app.route('/regulations/level/<level>')
+def regulations_by_level(level):
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    keyword = request.args.get('keyword', '')
+    sort = request.args.get('sort', 'date_desc')
+    
+    # 构建基本查询
+    if level == '地方性法规':
+        base_query = LegalRegulation.query.filter(
+            db.or_(
+                LegalRegulation.hierarchy_level == '地方性法规',
+                LegalRegulation.hierarchy_level == '自治条例',
+                LegalRegulation.hierarchy_level == '单行条例'
+            )
+        )
+    else:
+        base_query = LegalRegulation.query.filter_by(hierarchy_level=level)
+    
+    # 添加关键词搜索
+    if keyword:
+        base_query = base_query.filter(
+            db.or_(
+                LegalRegulation.name.like(f'%{keyword}%'),
+                LegalRegulation.document_number.like(f'%{keyword}%')
+            )
+        )
+    
+    # 添加排序
+    if sort == 'date_asc':
+        base_query = base_query.order_by(LegalRegulation.issued_date.asc())
+    elif sort == 'name':
+        base_query = base_query.order_by(LegalRegulation.name.asc())
+    else:  # 默认为date_desc
+        base_query = base_query.order_by(LegalRegulation.issued_date.desc())
+    
+    pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
+    regulations = pagination.items
+    
+    return render_template('regulations/level_list.html', 
+                           regulations=regulations, 
+                           pagination=pagination, 
+                           current_level=level)
+
+
 # 高级搜索
 @app.route('/advanced_search', methods=['GET'])
 def advanced_search():

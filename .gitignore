@@ -5,6 +5,7 @@ __pycache__/
 
 # 忽略数据库文件
 instance/
+*.db
 *.sqlite3
 
 # 忽略日志文件

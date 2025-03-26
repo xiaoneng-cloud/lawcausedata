@@ -462,13 +462,28 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/search/regulations">
-                            <i class="bi bi-search"></i> 法规搜索
+                        <a class="nav-link" href="{{ url_for('regulations_by_level', level='法律') }}">
+                            <i class="bi bi-journal-text"></i> 法律
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/advanced_search">
-                            <i class="bi bi-filter"></i> 高级搜索
+                        <a class="nav-link" href="{{ url_for('regulations_by_level', level='行政法规') }}">
+                            <i class="bi bi-journal-text"></i> 行政法规
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('regulations_by_level', level='部门规章') }}">
+                            <i class="bi bi-journal-text"></i> 部门规章
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('regulations_by_level', level='地方性法规') }}">
+                            <i class="bi bi-journal-text"></i> 地方性法规
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('regulations_by_level', level='地方政府规章') }}">
+                            <i class="bi bi-journal-text"></i> 地方政府规章
                         </a>
                     </li>
                 </ul>

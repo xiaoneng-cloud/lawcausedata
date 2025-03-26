@@ -393,7 +393,7 @@
     <div class="header-wrapper">
         <div class="app-container">
             <div class="regulation-header">
-                <a href="{{ url_for('search_regulations') }}" class="back-button">
+                <a href="{% if request.args.get('source') == 'level' %}{{ url_for('regulations_by_level', level=request.args.get('level')) }}{% else %}{{ url_for('search_regulations') }}{% endif %}" class="back-button">
                     <i class="bi bi-arrow-left"></i> 返回列表
                 </a>
                 <h2 class="regulation-title text-center">{{ regulation.name }}</h2>

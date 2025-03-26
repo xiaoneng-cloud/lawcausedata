@@ -3,212 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>法律法规管理平台</title>
+    <title>{% block title %}法律法规管理平台{% endblock %}</title>
+    <!-- 共享的 CSS 引用 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1a3c6e;        /* 深蓝色 - 代表专业、信任 */
-            --secondary-color: #f8f9fc;       /* 浅灰色背景 */
-            --accent-color: #c59c34;         /* 金色 - 代表天平、公正 */
-            --dark-color: #2c3e50;           /* 深色文字 */
-            --light-accent: #e9f0f7;         /* 浅蓝色强调 */
-            --success-color: #2e7d32;        /* 绿色 */
-            --warning-color: #ff8f00;        /* 橙色警告 */
-        }
-        
-        body {
-            font-family: 'Noto Serif SC', serif;
-            background-color: var(--secondary-color);
-            color: var(--dark-color);
-        }
-        
-        .navbar {
-            background-color: var(--primary-color) !important;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: 800;
-            letter-spacing: 0.05em;
-        }
-        
-        .nav-link {
-            font-weight: 600;
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #0c203e 100%);
-            color: white;
-            padding: 5rem 0;
-            margin-bottom: 3rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50 L0 50 M50 50 L100 50 M50 50 L50 0 M50 50 L50 100' stroke='%23ffffff10' stroke-width='1'/%3E%3C/svg%3E");
-            opacity: 0.1;
-        }
-        
-        .hero-title {
-            font-weight: 800;
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-        
-        .hero-title::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 4px;
-            background-color: var(--accent-color);
-            margin-top: 15px;
-        }
-        
-        .hero-text {
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            max-width: 600px;
-            line-height: 1.8;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 0.5rem 1.5rem;
-            font-weight: 600;
-        }
-        
-        .btn-primary:hover {
-            background-color: #102745;
-            border-color: #0d1f38;
-        }
-        
-        .btn-accent {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            font-weight: 600;
-        }
-        
-        .btn-accent:hover {
-            background-color: #b38a28;
-            border-color: #a37b22;
-            color: white;
-        }
-        
-        .btn-outline-light {
-            border-width: 2px;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 0.3rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 1.5rem;
-            height: 100%;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.15);
-        }
-        
-        .card-title {
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-top: 0.5rem;
-        }
-        
-        .card-icon {
-            font-size: 2.5rem;
-            color: var(--accent-color);
-            margin-bottom: 1rem;
-        }
-        
-        .feature-icon {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            background-color: var(--light-accent);
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-        
-        .stat-card {
-            padding: 1.5rem;
-            text-align: center;
-            height: 100%;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--dark-color);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-        }
-        
-        .section-title {
-            position: relative;
-            padding-bottom: 15px;
-            margin-bottom: 50px;
-            color: var(--primary-color);
-        }
-        
-        .section-title:after {
-            content: '';
-            position: absolute;
-            width: 60px;
-            height: 3px;
-            background-color: var(--accent-color);
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .feature-card {
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .footer {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
-        
-        .legal-tech-image {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <link href="{{ url_for('static', filename='css/common.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/home.css') }}" rel="stylesheet">
+    <!-- 页面特定的额外 CSS -->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -227,13 +29,33 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/search/regulations">
-                            <i class="bi bi-search"></i> 法规搜索
+                        <a class="nav-link {% if request.path == url_for('regulations_by_level', level='法律') %}active{% endif %}" 
+                           href="{{ url_for('regulations_by_level', level='法律') }}">
+                            <i class="bi bi-journal-text"></i> 法律
                         </a>
-                    </li>                   
+                    </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/advanced_search">
-                            <i class="bi bi-filter"></i> 高级搜索
+                        <a class="nav-link {% if request.path == url_for('regulations_by_level', level='行政法规') %}active{% endif %}" 
+                           href="{{ url_for('regulations_by_level', level='行政法规') }}">
+                            <i class="bi bi-journal-text"></i> 行政法规
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('regulations_by_level', level='部门规章') %}active{% endif %}" 
+                           href="{{ url_for('regulations_by_level', level='部门规章') }}">
+                            <i class="bi bi-journal-text"></i> 部门规章
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('regulations_by_level', level='地方性法规') %}active{% endif %}" 
+                           href="{{ url_for('regulations_by_level', level='地方性法规') }}">
+                            <i class="bi bi-journal-text"></i> 地方性法规
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('regulations_by_level', level='地方政府规章') %}active{% endif %}" 
+                           href="{{ url_for('regulations_by_level', level='地方政府规章') }}">
+                            <i class="bi bi-journal-text"></i> 地方政府规章
                         </a>
                     </li>
                     {% if current_user.is_authenticated and current_user.role == 'admin' %}
