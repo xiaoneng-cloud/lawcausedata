@@ -1,0 +1,128 @@
+<script>
+    // 初始化日期选择器
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr(".date-picker", {
+            locale: "zh",
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+    });
+      // 展开全部条文
+      document.getElementById('expandAllStructures').addEventListener('click', function() {
+        document.querySelectorAll('#structures .collapse').forEach(collapse => {
+            new bootstrap.Collapse(collapse, { toggle: true });
+        });
+        document.querySelectorAll('#structures .collapse-toggle').forEach(toggle => {
+            toggle.classList.remove('collapsed');
+        });
+    });
+    
+    // 折叠全部条文
+    document.getElementById('collapseAllStructures').addEventListener('click', function() {
+        document.querySelectorAll('#structures .collapse').forEach(collapse => {
+            new bootstrap.Collapse(collapse, { toggle: false });
+        });
+        document.querySelectorAll('#structures .collapse-toggle').forEach(toggle => {
+            toggle.classList.add('collapsed');
+        });
+    });
+    
+    // 搜索条文功能
+    document.getElementById('structureSearchBtn').addEventListener('click', function() {
+        const searchTerm = document.getElementById('structureSearch').value.toLowerCase();
+        const structureCards = document.querySelectorAll('#structures .item-card');
+        
+        structureCards.forEach(card => {
+            const content = card.querySelector('textarea').value.toLowerCase();
+            if (content.includes(searchTerm)) {
+                card.style.display = 'block';
+                // 高亮匹配的条文
+                card.classList.add('active');
+                // 展开卡片
+                const collapseId = card.querySelector('.collapse').id;
+                new bootstrap.Collapse(document.getElementById(collapseId), { toggle: true });
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+// 自动保存功能
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('form[method="post"]');
+    const autoSaveInterval = 60000; // 每分钟自动保存一次
+    
+    forms.forEach(form => {
+        // 监听表单输入变化
+        const inputs = form.querySelectorAll('input, textarea, select');
+        let formChanged = false;
+        
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                formChanged = true;
+            });
+        });
+        
+        // 设置自动保存定时器
+        setInterval(() => {
+            if (formChanged) {
+                // 创建自动保存请求
+                const formData = new FormData(form);
+                formData.append('auto_save', 'true');
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 显示自动保存成功提示
+                        const saveIndicator = document.createElement('div');
+                        saveIndicator.className = 'auto-save-indicator';
+                        saveIndicator.textContent = '已自动保存';
+                        document.body.appendChild(saveIndicator);
+                        
+                        // 两秒后移除提示
+                        setTimeout(() => {
+                            document.body.removeChild(saveIndicator);
+                        }, 2000);
+                        
+                        formChanged = false;
+                    }
+                })
+                .catch(error => console.error('自动保存失败:', error));
+            }
+        }, autoSaveInterval);
+    });
+});
+document.getElementById('structureSort').addEventListener('change', function() {
+        const sortOption = this.value;
+        const structureContainer = document.querySelector('#structures .form-card');
+        const structureCards = Array.from(document.querySelectorAll('#structures .item-card'));
+        
+        structureCards.sort((a, b) => {
+            if (sortOption === 'article-asc') {
+                const articleA = parseInt(a.querySelector('input[name="article"]').value) || 0;
+                const articleB = parseInt(b.querySelector('input[name="article"]').value) || 0;
+                return articleA - articleB;
+            } else if (sortOption === 'article-desc') {
+                const articleA = parseInt(a.querySelector('input[name="article"]').value) || 0;
+                const articleB = parseInt(b.querySelector('input[name="article"]').value) || 0;
+                return articleB - articleA;
+            } else if (sortOption === 'id-asc') {
+                const idA = parseInt(a.id.replace('structure-', ''));
+                const idB = parseInt(b.id.replace('structure-', ''));
+                return idA - idB;
+            } else {
+                const idA = parseInt(a.id.replace('structure-', ''));
+                const idB = parseInt(b.id.replace('structure-', ''));
+                return idB - idA;
+            }
+        });
+        
+        // 移除现有卡片并按新顺序添加
+        structureCards.forEach(card => card.remove());
+        structureCards.forEach(card => structureContainer.appendChild(card));
+    });
+
+</script>

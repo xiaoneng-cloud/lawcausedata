@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑 - {{ regulation.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    {% include 'regulations/edit/_edit_styles.html' %}
+</head>
+<body>
+    <div class="header-wrapper">
+        <div class="app-container">
+            <div class="regulation-header">
+                <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" class="back-button">
+                    <i class="bi bi-arrow-left"></i> 返回详情
+                </a>
+                <h2 class="regulation-title text-center">编辑 - {{ regulation.name }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- 导航标签 -->
+        <ul class="nav nav-tabs" id="editTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                    <i class="bi bi-info-circle"></i> 基本信息
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="structures-tab" data-bs-toggle="tab" data-bs-target="#structures" type="button" role="tab" aria-controls="structures" aria-selected="false">
+                    <i class="bi bi-list-ol"></i> 条文管理 <span class="badge rounded-pill bg-light text-dark">{{ structures|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="causes-tab" data-bs-toggle="tab" data-bs-target="#causes" type="button" role="tab" aria-controls="causes" aria-selected="false">
+                    <i class="bi bi-exclamation-diamond"></i> 事由管理 <span class="badge rounded-pill bg-light text-dark">{{ causes|length }}</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- 标签内容 -->
+        <div class="tab-content" id="editTabsContent">
+            <!-- 基本信息标签 -->
+            <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                {% include 'regulations/edit/_edit_basic.html' %}
+            </div>
+            
+            <!-- 条文管理标签 -->
+            <div class="tab-pane fade" id="structures" role="tabpanel" aria-labelledby="structures-tab">
+                {% include 'regulations/edit/_edit_structures.html' %}
+            </div>
+            
+            <!-- 事由管理标签 -->
+            <div class="tab-pane fade" id="causes" role="tabpanel" aria-labelledby="causes-tab">
+                {% include 'regulations/edit/_edit_causes.html' %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框部分 -->
+    {% include 'regulations/edit/_edit_modals.html' %}
+
+    <!-- 回到顶部按钮 -->
+    <button onclick="topFunction()" id="scrollTopBtn" title="回到顶部">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <footer>
+        <div class="app-container">
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="text-muted mb-0">© 2025 法律法规管理平台</p>
+                <div>
+                    <a href="#" class="text-muted me-3">
+                        <i class="bi bi-question-circle"></i> 帮助
+                    </a>
+                    <a href="#" class="text-muted">
+                        <i class="bi bi-envelope"></i> 反馈
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    {% include 'regulations/edit/_edit_scripts.html' %}
+</body>
+</html>

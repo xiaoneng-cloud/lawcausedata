@@ -340,6 +340,211 @@ def regulation_detail(regulation_id):
                            regulation=regulation, 
                            structures=structures,
                            causes=causes)
+@app.route('/regulations/<int:regulation_id>/edit', methods=['GET', 'POST'])
+@login_required
+def regulation_edit(regulation_id):
+    # 检查用户是否有权限编辑
+    if current_user.role != 'admin':
+        flash('您没有权限编辑法规', 'danger')
+        return redirect(url_for('regulation_detail', regulation_id=regulation_id))
+    # 获取法规
+    regulation = LegalRegulation.query.get_or_404(regulation_id)
+    
+    # 获取条文和事由
+    structures = LegalStructure.query.filter_by(regulation_id=regulation_id).all()
+    causes = LegalCause.query.filter_by(regulation_id=regulation_id).all()
+    
+    # 如果是POST请求，处理表单提交
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+        
+        if form_type == 'regulation':
+            # 处理法规基本信息的更新
+            regulation.name = request.form.get('name')
+            regulation.document_number = request.form.get('document_number')
+            regulation.issued_by = request.form.get('issued_by')
+            regulation.approved_by = request.form.get('approved_by')
+            regulation.hierarchy_level = request.form.get('hierarchy_level')
+            
+            # 处理日期字段
+            if request.form.get('issued_date'):
+                regulation.issued_date = datetime.strptime(request.form.get('issued_date'), '%Y-%m-%d')
+            if request.form.get('effective_date'):
+                regulation.effective_date = datetime.strptime(request.form.get('effective_date'), '%Y-%m-%d')
+            if request.form.get('revision_date'):
+                regulation.revision_date = datetime.strptime(request.form.get('revision_date'), '%Y-%m-%d')
+            
+            # 更新其他字段
+            regulation.province = request.form.get('province')
+            regulation.city = request.form.get('city')
+            regulation.status = request.form.get('status')
+            
+            try:
+                db.session.commit()
+                flash('法规信息已成功更新', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'更新法规失败: {str(e)}', 'danger')
+        
+        elif form_type == 'structure':
+            # 处理条文更新
+            structure_id = request.form.get('structure_id')
+            structure = LegalStructure.query.get_or_404(structure_id)
+            
+            # 确保条文属于当前法规
+            if structure.regulation_id != regulation.id:
+                flash('无权编辑此条文', 'danger')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
+            
+            # 更新条文字段
+            structure.article = request.form.get('article', type=int)
+            structure.paragraph = request.form.get('paragraph', type=int)
+            structure.item = request.form.get('item', type=int)
+            structure.section = request.form.get('section', type=int)
+            structure.content = request.form.get('content')
+            structure.original_text = request.form.get('original_text')
+            
+            try:
+                db.session.commit()
+                flash('条文信息已成功更新', 'success')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id, _anchor='structure-' + structure_id))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'更新条文失败: {str(e)}', 'danger')
+        
+        elif form_type == 'cause':
+            # 处理事由更新
+            cause_id = request.form.get('cause_id')
+            cause = LegalCause.query.get_or_404(cause_id)
+            
+            # 确保事由属于当前法规
+            if cause.regulation_id != regulation.id:
+                flash('无权编辑此事由', 'danger')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
+            
+            # 更新事由字段
+            cause.code = request.form.get('code')
+            cause.description = request.form.get('description')
+            cause.violation_type = request.form.get('violation_type')
+            cause.violation_clause = request.form.get('violation_clause')
+            cause.behavior = request.form.get('behavior')
+            cause.illegal_behavior = request.form.get('illegal_behavior')
+            cause.penalty_type = request.form.get('penalty_type')
+            cause.penalty_clause = request.form.get('penalty_clause')
+            cause.severity = request.form.get('severity')
+            
+            try:
+                db.session.commit()
+                flash('事由信息已成功更新', 'success')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id, _anchor='cause-' + cause_id))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'更新事由失败: {str(e)}', 'danger')
+        elif form_type == 'new_structure':
+            # 创建新条文
+            try:
+                new_structure = LegalStructure(
+                    regulation_id=regulation.id,
+                    article=request.form.get('article', type=int),
+                    paragraph=request.form.get('paragraph', type=int),
+                    item=request.form.get('item', type=int),
+                    section=request.form.get('section', type=int),
+                    content=request.form.get('content'),
+                    original_text=request.form.get('original_text')
+                )
+                db.session.add(new_structure)
+                db.session.flush()  # 获取新创建条文的ID
+                
+                db.session.commit()
+                flash('新条文已成功添加', 'success')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id, _anchor=f'structure-{new_structure.id}'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'添加条文失败: {str(e)}', 'danger')
+        
+        elif form_type == 'new_cause':
+            # 创建新事由
+            try:
+                new_cause = LegalCause(
+                    regulation_id=regulation.id,
+                    code=request.form.get('code'),
+                    description=request.form.get('description'),
+                    violation_type=request.form.get('violation_type'),
+                    violation_clause=request.form.get('violation_clause'),
+                    behavior=request.form.get('behavior'),
+                    illegal_behavior=request.form.get('illegal_behavior'),
+                    penalty_type=request.form.get('penalty_type'),
+                    penalty_clause=request.form.get('penalty_clause'),
+                    severity=request.form.get('severity', '一般')
+                )
+                db.session.add(new_cause)
+                db.session.flush()  # 获取新创建事由的ID
+                
+                db.session.commit()
+                flash('新事由已成功添加', 'success')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id, _anchor=f'cause-{new_cause.id}'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'添加事由失败: {str(e)}', 'danger')
+        
+        elif form_type == 'delete_structure':
+            # 删除条文
+            structure_id = request.form.get('structure_id')
+            structure = LegalStructure.query.get_or_404(structure_id)
+            
+            # 确保条文属于当前法规
+            if structure.regulation_id != regulation.id:
+                flash('无权删除此条文', 'danger')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
+            
+            try:
+                db.session.delete(structure)
+                db.session.commit()
+                flash('条文已成功删除', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'删除条文失败: {str(e)}', 'danger')
+        
+        elif form_type == 'delete_cause':
+            # 删除事由
+            cause_id = request.form.get('cause_id')
+            cause = LegalCause.query.get_or_404(cause_id)
+            
+            # 确保事由属于当前法规
+            if cause.regulation_id != regulation.id:
+                flash('无权删除此事由', 'danger')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
+            
+            try:
+                # 删除相关的处罚信息
+                LegalPunishment.query.filter_by(cause_id=cause.id).delete()
+                
+                # 删除事由
+                db.session.delete(cause)
+                db.session.commit()
+                flash('事由已成功删除', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'删除事由失败: {str(e)}', 'danger')
+
+    
+    # 对条文和事由进行排序，以便在界面上更好地显示
+    structures = sorted(structures, key=lambda x: (x.article or 0, x.paragraph or 0, x.item or 0, x.section or 0))
+    causes = sorted(causes, key=lambda x: x.code)
+    
+    return render_template('regulations/edit/edit.html', 
+                           regulation=regulation,
+                           structures=structures,
+                           causes=causes)
+    
+    # 获取条文和事由，以便在编辑页面显示相关信息
+    structures = LegalStructure.query.filter_by(regulation_id=regulation_id).all()
+    causes = LegalCause.query.filter_by(regulation_id=regulation_id).all()
+    
+    return render_template('regulations/edit/edit.html', 
+                           regulation=regulation,
+                           structures=structures,
+                           causes=causes)
 
 # 新增统计图表路由
 @app.route('/regulations/<int:regulation_id>/stats')
