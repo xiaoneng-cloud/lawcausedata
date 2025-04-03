@@ -48,42 +48,15 @@
             <div class="item-card {% if request.args.get('_anchor') == 'structure-' ~ structure.id %}active{% endif %}" id="structure-{{ structure.id }}">
                 <div class="item-card-header" data-bs-toggle="collapse" data-bs-target="#structure-collapse-{{ structure.id }}" aria-expanded="false">
                     <div class="item-title">
-                        <span class="item-id">#{{ structure.id }}</span>
-                        {% if structure.article %}第{{ structure.article }}条{% endif %}
-                        {% if structure.paragraph %}第{{ structure.paragraph }}款{% endif %}
-                        {% if structure.item %}第{{ structure.item }}项{% endif %}
-                        {% if structure.section %}第{{ structure.section }}目{% endif %}
+                        {{ structure.original_text }}
                     </div>
                     <i class="bi bi-chevron-down collapse-toggle collapsed"></i>
                 </div>
                 <div class="collapse item-card-body" id="structure-collapse-{{ structure.id }}">
                     <form method="post" action="{{ url_for('regulation_edit', regulation_id=regulation.id) }}" class="item-form">
                         <input type="hidden" name="form_type" value="structure">
-                        <input type="hidden" name="structure_id" value="{{ structure.id }}">
-                        
-                        <div class="row">
-                            <div class="col-md-3 form-group">
-                                <label for="structure-article-{{ structure.id }}" class="form-label">条</label>
-                                <input type="number" id="structure-article-{{ structure.id }}" name="article" class="form-control" value="{{ structure.article or '' }}">
-                            </div>
-                            <div class="col-md-3 form-group">
-                                <label for="structure-paragraph-{{ structure.id }}" class="form-label">款</label>
-                                <input type="number" id="structure-paragraph-{{ structure.id }}" name="paragraph" class="form-control" value="{{ structure.paragraph or '' }}">
-                            </div>
-                            <div class="col-md-3 form-group">
-                                <label for="structure-item-{{ structure.id }}" class="form-label">项</label>
-                                <input type="number" id="structure-item-{{ structure.id }}" name="item" class="form-control" value="{{ structure.item or '' }}">
-                            </div>
-                            <div class="col-md-3 form-group">
-                                <label for="structure-section-{{ structure.id }}" class="form-label">目</label>
-                                <input type="number" id="structure-section-{{ structure.id }}" name="section" class="form-control" value="{{ structure.section or '' }}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="structure-original-{{ structure.id }}" class="form-label">原条款文本</label>
-                            <input type="text" id="structure-original-{{ structure.id }}" name="original_text" class="form-control" value="{{ structure.original_text or '' }}">
-                        </div>
+                        <input type="hidden" name="structure_id" value="{{ structure.id }}">                     
+                       
                         
                         <div class="form-group">
                             <label for="structure-content-{{ structure.id }}" class="form-label">内容</label>

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑处罚措施 - {{ cause.description }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1a3c6e;
+            --secondary-color: #f8f9fc;
+            --accent-color: #c59c34;
+            --dark-color: #2c3e50;
+            --light-accent: #e9f0f7;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --border-radius: 8px;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background-color: var(--secondary-color);
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        
+        .header-wrapper {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0c203e 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(25deg);
+        }
+        
+        .edit-header {
+            color: white;
+            padding: 2.5rem 1.5rem;
+            border-radius: 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .edit-title {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        
+        .back-button i {
+            margin-right: 6px;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            width: 120px;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .section-title i {
+            margin-right: 8px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            border-radius: var(--border-radius);
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 60, 110, 0.15);
+        }
+        
+        .item-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .item-card:hover {
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .item-card-header {
+            background-color: var(--light-accent);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .item-card-body {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .collapse-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .collapse-toggle.collapsed {
+            transform: rotate(0deg);
+        }
+        
+        .collapse-toggle:not(.collapsed) {
+            transform: rotate(180deg);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #14325d;
+            border-color: #14325d;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .item-title {
+            display: flex;
+            align-items: center;
+        }
+        
+        .item-title i {
+            margin-right: 8px;
+            color: var(--accent-color);
+        }
+        
+        .item-card.active {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 60, 110, 0.2);
+        }
+        
+        footer {
+            background-color: white;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        footer p {
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .edit-title {
+                font-size: 1.5rem;
+            }
+            
+            .info-label {
+                width: 100%;
+                margin-bottom: 0.25rem;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* 滚动到顶部按钮 */
+        #scrollTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 50%;
+            font-size: 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: var(--transition);
+        }
+        
+        #scrollTopBtn:hover {
+            background-color: #14325d;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header-wrapper">
+        <div class="app-container">
+            <div class="edit-header">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <a href="{{ url_for('regulation_edit', regulation_id=regulation.id)  }}" class="back-button">
+                        <i class="bi bi-arrow-left"></i> 返回法规编辑
+                    </a>
+                    
+                </div>
+                <h2 class="edit-title">编辑处罚措施 - {{ cause.description }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mt-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="info-card">
+            <h3 class="section-title mb-3">
+                <i class="bi bi-info-circle"></i> 事由信息
+            </h3>
+            <div class="info-row">
+                <div class="info-label">所属法规:</div>
+                <div class="info-value">{{ regulation.name }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">事由编号:</div>
+                <div class="info-value">{{ cause.code }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">事由描述:</div>
+                <div class="info-value">{{ cause.description }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">违则类型:</div>
+                <div class="info-value">{{ cause.violation_type or '未指定' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">违法行为:</div>
+                <div class="info-value">{{ cause.illegal_behavior or '未指定' }}</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3 class="section-title">
+                <span><i class="bi bi-list-ol"></i> 处罚措施管理</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addPunishmentModal">
+                    <i class="bi bi-plus-circle"></i> 添加处罚措施
+                </button>
+            </h3>
+            
+            <div class="d-flex align-items-center mb-3">
+                <div class="btn-group btn-group-sm me-2">
+                    <button type="button" class="btn btn-outline-primary" id="expandAllPunishments">
+                        <i class="bi bi-arrows-expand"></i> 展开全部
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="collapseAllPunishments">
+                        <i class="bi bi-arrows-collapse"></i> 折叠全部
+                    </button>
+                </div>
+                
+                <div class="ms-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">搜索处罚</span>
+                        <input type="text" class="form-control" id="punishmentSearch" placeholder="输入关键词...">
+                        <button class="btn btn-outline-secondary" type="button" id="punishmentSearchBtn">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if punishments %}
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    单击处罚项目展开编辑界面。共 <strong>{{ punishments|length }}</strong> 条处罚措施。
+                </div>
+                
+                {% for punishment in punishments %}
+                    <div class="item-card {% if request.args.get('_anchor') == 'punishment-' ~ punishment.id %}active{% endif %}" id="punishment-{{ punishment.id }}">
+                        <div class="item-card-header" data-bs-toggle="collapse" data-bs-target="#punishment-collapse-{{ punishment.id }}" aria-expanded="false">
+                            <div class="item-title">
+                                <i class="bi bi-exclamation-diamond"></i>
+                                {{ punishment.additional_notes }}  {{ punishment.punishment_type }}
+                            </div>
+                            <i class="bi bi-chevron-down collapse-toggle collapsed"></i>
+                        </div>
+                        <div class="collapse item-card-body" id="punishment-collapse-{{ punishment.id }}">
+                            <form method="post" action="{{ url_for('punishment_edit', cause_id=cause.id) }}" class="punishment-form">
+                                <input type="hidden" name="form_type" value="punishment">
+                                <input type="hidden" name="punishment_id" value="{{ punishment.id }}">
+                                <div class="form-group">
+                                    <label for="additional-notes-{{ punishment.id }}" class="form-label">行政行为</label>
+                                    <textarea id="additional-notes-{{ punishment.id }}" name="additional_notes" class="form-control" rows="2">{{ punishment.additional_notes or '' }}</textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label for="circumstance-{{ punishment.id }}" class="form-label">情形</label>
+                                        <input type="text" id="circumstance-{{ punishment.id }}" name="circumstance" class="form-control" value="{{ punishment.circumstance or '' }}">
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label for="punishment-type-{{ punishment.id }}" class="form-label">处罚类型</label>
+                                        <input type="text" id="punishment-type-{{ punishment.id }}" name="punishment_type" class="form-control" value="{{ punishment.punishment_type or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label for="industry-{{ punishment.id }}" class="form-label">行业</label>
+                                        <input type="text" id="industry-{{ punishment.id }}" name="industry" class="form-control" value="{{ punishment.industry or '' }}">
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label for="subject-level-{{ punishment.id }}" class="form-label">主体级别</label>
+                                        <input type="text" id="subject-level-{{ punishment.id }}" name="subject_level" class="form-control" value="{{ punishment.subject_level or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label for="punishment-target-{{ punishment.id }}" class="form-label">处罚对象</label>
+                                        <input type="text" id="punishment-target-{{ punishment.id }}" name="punishment_target" class="form-control" value="{{ punishment.punishment_target or '' }}">
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label for="progressive-punishment-{{ punishment.id }}" class="form-label">递进处罚</label>
+                                        <input type="text" id="progressive-punishment-{{ punishment.id }}" name="progressive_punishment" class="form-control" value="{{ punishment.progressive_punishment or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="punishment-details-{{ punishment.id }}" class="form-label">处罚明细</label>
+                                    <textarea id="punishment-details-{{ punishment.id }}" name="punishment_details" class="form-control" rows="3">{{ punishment.punishment_details or '' }}</textarea>
+                                </div>
+                                
+                               
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-danger btn-sm delete-punishment-btn" data-punishment-id="{{ punishment.id }}" data-action-url="{{ url_for('punishment_edit', cause_id=cause.id) }}">
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> 保存此处罚
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    该事由尚未添加任何处罚措施。
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 添加处罚措施模态框 -->
+    <div class="modal fade" id="addPunishmentModal" tabindex="-1" aria-labelledby="addPunishmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPunishmentModalLabel">添加新处罚措施</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{{ url_for('punishment_edit', cause_id=cause.id) }}" id="newPunishmentForm">
+                        <input type="hidden" name="form_type" value="new_punishment">
+                        <div class="form-group">
+                            <label for="new-additional-notes" class="form-label">行政行为</label>
+                            <textarea id="new-additional-notes" name="additional_notes" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="new-circumstance" class="form-label">情形</label>
+                                <input type="text" id="new-circumstance" name="circumstance" class="form-control">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="new-punishment-type" class="form-label">处罚类型</label>
+                                <input type="text" id="new-punishment-type" name="punishment_type" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="new-industry" class="form-label">行业</label>
+                                <input type="text" id="new-industry" name="industry" class="form-control">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="new-subject-level" class="form-label">主体级别</label>
+                                <input type="text" id="new-subject-level" name="subject_level" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="new-punishment-target" class="form-label">处罚对象</label>
+                                <input type="text" id="new-punishment-target" name="punishment_target" class="form-control">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="new-progressive-punishment" class="form-label">递进处罚</label>
+                                <input type="text" id="new-progressive-punishment" name="progressive_punishment" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new-punishment-details" class="form-label">处罚明细</label>
+                            <textarea id="new-punishment-details" name="punishment_details" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                       
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitNewPunishment">保存处罚</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button onclick="topFunction()" id="scrollTopBtn" title="回到顶部">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <footer>
+        <div class="app-container">
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="text-muted mb-0">© 2025 法律法规管理平台</p>
+                <div>
+                    <a href="#" class="text-muted me-3">
+                        <i class="bi bi-question-circle"></i> 帮助
+                    </a>
+                    <a href="#" class="text-muted">
+                        <i class="bi bi-envelope"></i> 反馈
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 展开全部处罚
+            document.getElementById('expandAllPunishments').addEventListener('click', function() {
+                document.querySelectorAll('.item-card .collapse').forEach(collapse => {
+                    new bootstrap.Collapse(collapse, { toggle: true });
+                });
+                document.querySelectorAll('.collapse-toggle').forEach(toggle => {
+                    toggle.classList.remove('collapsed');
+                });
+            });
+            
+            // 折叠全部处罚
+            document.getElementById('collapseAllPunishments').addEventListener('click', function() {
+                document.querySelectorAll('.item-card .collapse').forEach(collapse => {
+                    new bootstrap.Collapse(collapse, { toggle: false });
+                });
+                document.querySelectorAll('.collapse-toggle').forEach(toggle => {
+                    toggle.classList.add('collapsed');
+                });
+            });
+            
+            // 搜索处罚
+            document.getElementById('punishmentSearchBtn').addEventListener('click', function() {
+                const searchTerm = document.getElementById('punishmentSearch').value.toLowerCase();
+                const punishmentCards = document.querySelectorAll('.item-card');
+                
+                punishmentCards.forEach(card => {
+                    const circumstance = card.querySelector('input[name="circumstance"]').value.toLowerCase();
+                    const punishmentType = card.querySelector('input[name="punishment_type"]').value.toLowerCase();
+                    const punishmentDetails = card.querySelector('textarea[name="punishment_details"]').value.toLowerCase();
+                    
+                    if (circumstance.includes(searchTerm) || 
+                        punishmentType.includes(searchTerm) || 
+                        punishmentDetails.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        // 高亮匹配的条目
+                        card.classList.add('active');
+                        // 展开卡片
+                        const collapseId = card.querySelector('.collapse').id;
+                        new bootstrap.Collapse(document.getElementById(collapseId), { toggle: true });
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+            
+            // 新增处罚提交
+            document.getElementById('submitNewPunishment').addEventListener('click', function() {
+                document.getElementById('newPunishmentForm').submit();
+            });
+            
+            // 删除处罚
+            document.querySelectorAll('.delete-punishment-btn').forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    const punishmentId = this.getAttribute('data-punishment-id');
+                    const actionUrl = this.getAttribute('data-action-url');
+                    
+                    console.log(`准备删除处罚ID: ${punishmentId}, 请求URL: ${actionUrl}`);
+                    
+                    if (confirm('确定要删除此处罚措施吗？此操作不可恢复。')) {
+                        // 创建表单并提交
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = actionUrl;
+                        form.style.display = 'none';
+                        
+                        const formTypeInput = document.createElement('input');
+                        formTypeInput.type = 'hidden';
+                        formTypeInput.name = 'form_type';
+                        formTypeInput.value = 'delete_punishment';
+                        
+                        const punishmentIdInput = document.createElement('input');
+                        punishmentIdInput.type = 'hidden';
+                        punishmentIdInput.name = 'punishment_id';
+                        punishmentIdInput.value = punishmentId;
+                        
+                        form.appendChild(formTypeInput);
+                        form.appendChild(punishmentIdInput);
+                        document.body.appendChild(form);
+                        
+                        form.submit();
+                    }
+                });
+            });
+            
+            // 回到顶部按钮
+            let scrollTopBtn = document.getElementById("scrollTopBtn");
+            
+            // 当用户向下滚动20px时，显示按钮
+            window.onscroll = function() {
+                if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                    scrollTopBtn.style.display = "block";
+                } else {
+                    scrollTopBtn.style.display = "none";
+                }
+            };
+            
+            // 定义回到顶部函数
+            window.topFunction = function() {
+                document.body.scrollTop = 0; // For Safari
+                document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+            };
+            
+            // 如果URL中有锚点，自动展开相应的处罚卡片
+            if (window.location.hash) {
+                const targetId = window.location.hash.substring(1);
+                const targetCollapse = document.querySelector(`#${targetId} .collapse`);
+                if (targetCollapse) {
+                    new bootstrap.Collapse(targetCollapse, { toggle: true });
+                    document.getElementById(targetId).scrollIntoView();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

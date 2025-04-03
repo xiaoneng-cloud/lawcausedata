@@ -135,7 +135,7 @@ def import_punishments(xls_punish, regulation, cause_dict):
                 subject_level=str(row['主体级别']) if pd.notna(row.get('主体级别', None)) else None,
                 punishment_target=str(row['处罚对象']) if pd.notna(row.get('处罚对象', None)) else None,
                 punishment_details=str(row['处罚明细']) if pd.notna(row.get('处罚明细', None)) else None,
-                additional_notes=str(row['补充说明']) if pd.notna(row.get('补充说明', None)) else None
+                additional_notes=str(row['行政行为']) if pd.notna(row.get('行政行为', None)) else None
             )
             
             db.session.add(punishment)

@@ -453,7 +453,7 @@
                         <!-- 添加编辑按钮，仅对已登录用户显示 -->
                 {% if current_user.is_authenticated %}
                 <div class="text-end mt-3">
-                    <a href="{{ url_for('regulation_edit', regulation_id=regulation.id) }}" class="btn btn-primary btn-sm">
+                    <a href="{{ url_for('regulation_edit', regulation_id=regulation.id, source='level', level=current_level) }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-pencil-square"></i> 编辑法规
                     </a>
                 </div>
@@ -557,12 +557,13 @@
                                     </div>
                                 </div>
                                 {% endif %}
-
+                                
                                 <!-- 处罚措施表格 -->
                                 <table class="table table-sm table-hover punishment-table">
                                     <thead>
                                         <tr>
                                             <th>情形</th>
+                                            <th>行政行为</th>
                                             <th>处罚类型</th>
                                             <th>行业</th>
                                             <th>处罚对象</th>
@@ -572,11 +573,12 @@
                                     <tbody>
                                         {% for punishment in cause.punishments %}
                                         <tr>
-                                            <td>{{ punishment.circumstance or '未知' }}</td>
-                                            <td>{{ punishment.punishment_type or '未知' }}</td>
-                                            <td>{{ punishment.industry or '未知' }}</td>
-                                            <td>{{ punishment.punishment_target or '未知' }}</td>
-                                            <td>{{ punishment.punishment_details or '未知' }}</td>
+                                            <td>{{ punishment.circumstance or '' }}</td>
+                                            <td>{{ punishment.additional_notes or '' }}</td>
+                                            <td>{{ punishment.punishment_type or '' }}</td>
+                                            <td>{{ punishment.industry or '' }}</td>
+                                            <td>{{ punishment.punishment_target or '' }}</td>
+                                            <td>{{ punishment.punishment_details or '' }}</td>
                                         </tr>
                                         {% else %}
                                         <tr>

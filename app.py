@@ -340,6 +340,7 @@ def regulation_detail(regulation_id):
                            regulation=regulation, 
                            structures=structures,
                            causes=causes)
+
 @app.route('/regulations/<int:regulation_id>/edit', methods=['GET', 'POST'])
 @login_required
 def regulation_edit(regulation_id):
@@ -505,27 +506,43 @@ def regulation_edit(regulation_id):
                 db.session.rollback()
                 flash(f'删除条文失败: {str(e)}', 'danger')
         
+        # 在app.py的删除事由部分添加详细日志
         elif form_type == 'delete_cause':
             # 删除事由
             cause_id = request.form.get('cause_id')
+            print(f"尝试删除事由，ID: {cause_id}")
+            
             cause = LegalCause.query.get_or_404(cause_id)
+            print(f"找到事由: {cause.description}, 关联法规ID: {cause.regulation_id}")
             
             # 确保事由属于当前法规
             if cause.regulation_id != regulation.id:
+                print(f"无权删除: 事由的regulation_id({cause.regulation_id}) != 当前regulation.id({regulation.id})")
                 flash('无权删除此事由', 'danger')
                 return redirect(url_for('regulation_edit', regulation_id=regulation_id))
             
             try:
+                # 检查相关的处罚数量
+                punishment_count = LegalPunishment.query.filter_by(cause_id=cause.id).count()
+                print(f"将删除 {punishment_count} 条相关处罚记录")
+                
                 # 删除相关的处罚信息
                 LegalPunishment.query.filter_by(cause_id=cause.id).delete()
                 
                 # 删除事由
                 db.session.delete(cause)
+                print("事由标记为删除，准备提交事务")
                 db.session.commit()
+                print("事务已提交，事由删除成功")
                 flash('事由已成功删除', 'success')
+                
+                # 修改：使用重定向而不是继续处理
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
             except Exception as e:
                 db.session.rollback()
+                print(f"删除事由失败，异常信息: {str(e)}")
                 flash(f'删除事由失败: {str(e)}', 'danger')
+                return redirect(url_for('regulation_edit', regulation_id=regulation_id))
 
     
     # 对条文和事由进行排序，以便在界面上更好地显示
@@ -545,6 +562,101 @@ def regulation_edit(regulation_id):
                            regulation=regulation,
                            structures=structures,
                            causes=causes)
+
+@app.route('/causes/<int:cause_id>/punishments', methods=['GET', 'POST'])
+@login_required
+def punishment_edit(cause_id):
+    # 检查用户是否有权限编辑
+    if current_user.role != 'admin':
+        flash('您没有权限编辑处罚措施', 'danger')
+        return redirect(url_for('cause_detail', cause_id=cause_id))
+    
+        # 获取事由信息
+    cause = LegalCause.query.get_or_404(cause_id)
+    regulation = cause.regulation  # 这里确保获取了regulation变量
+    
+    # 获取该事由下的所有处罚措施
+    punishments = LegalPunishment.query.filter_by(cause_id=cause_id).all()
+    
+    # 处理表单提交
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+        
+        # 编辑现有处罚措施
+        if form_type == 'punishment':
+            punishment_id = request.form.get('punishment_id')
+            punishment = LegalPunishment.query.get_or_404(punishment_id)
+            
+            # 确保处罚属于当前事由
+            if punishment.cause_id != cause.id:
+                flash('无权编辑此处罚', 'danger')
+                return redirect(url_for('punishment_edit', cause_id=cause_id))
+            
+            # 更新处罚信息
+            punishment.circumstance = request.form.get('circumstance')
+            punishment.punishment_type = request.form.get('punishment_type')
+            punishment.progressive_punishment = request.form.get('progressive_punishment')
+            punishment.industry = request.form.get('industry')
+            punishment.subject_level = request.form.get('subject_level')
+            punishment.punishment_target = request.form.get('punishment_target')
+            punishment.punishment_details = request.form.get('punishment_details')
+            punishment.additional_notes = request.form.get('additional_notes')
+            
+            try:
+                db.session.commit()
+                flash('处罚信息已成功更新', 'success')
+                return redirect(url_for('punishment_edit', cause_id=cause_id, _anchor=f'punishment-{punishment_id}'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'更新处罚失败: {str(e)}', 'danger')
+        
+        # 新增处罚措施
+        elif form_type == 'new_punishment':
+            try:
+                new_punishment = LegalPunishment(
+                    cause_id=cause.id,
+                    circumstance=request.form.get('circumstance'),
+                    punishment_type=request.form.get('punishment_type'),
+                    progressive_punishment=request.form.get('progressive_punishment'),
+                    industry=request.form.get('industry'),
+                    subject_level=request.form.get('subject_level'),
+                    punishment_target=request.form.get('punishment_target'),
+                    punishment_details=request.form.get('punishment_details'),
+                    additional_notes=request.form.get('additional_notes')
+                )
+                db.session.add(new_punishment)
+                db.session.flush()  # 获取新创建处罚的ID
+                
+                db.session.commit()
+                flash('新处罚已成功添加', 'success')
+                return redirect(url_for('punishment_edit', cause_id=cause_id, _anchor=f'punishment-{new_punishment.id}'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'添加处罚失败: {str(e)}', 'danger')
+        
+        # 删除处罚措施
+        elif form_type == 'delete_punishment':
+            punishment_id = request.form.get('punishment_id')
+            punishment = LegalPunishment.query.get_or_404(punishment_id)
+            
+            # 确保处罚属于当前事由
+            if punishment.cause_id != cause.id:
+                flash('无权删除此处罚', 'danger')
+                return redirect(url_for('punishment_edit', cause_id=cause_id))
+            
+            try:
+                db.session.delete(punishment)
+                db.session.commit()
+                flash('处罚已成功删除', 'success')
+                return redirect(url_for('punishment_edit', cause_id=cause_id))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'删除处罚失败: {str(e)}', 'danger')
+    
+    return render_template('punishments/edit.html',
+                          cause=cause,
+                          regulation=regulation,  # 确保传递regulation变量
+                          punishments=punishments)
 
 # 新增统计图表路由
 @app.route('/regulations/<int:regulation_id>/stats')
@@ -639,10 +751,12 @@ def regulation_stats(regulation_id):
 @app.route('/causes/<int:cause_id>')
 def cause_detail(cause_id):
     cause = LegalCause.query.get_or_404(cause_id)
+    regulation = cause.regulation  # 确保提供regulation变量
     punishments = LegalPunishment.query.filter_by(cause_id=cause_id).all()
     
     return render_template('causes/detail.html', 
                            cause=cause, 
+                           regulation=regulation,  # 传递regulation变量
                            punishments=punishments)
 
 @app.route('/regulations/level/<level>')

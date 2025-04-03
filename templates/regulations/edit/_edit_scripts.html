@@ -124,5 +124,47 @@ document.getElementById('structureSort').addEventListener('change', function() {
         structureCards.forEach(card => card.remove());
         structureCards.forEach(card => structureContainer.appendChild(card));
     });
-
+// 为所有删除事由按钮添加事件监听
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-cause-btn').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            const causeId = this.getAttribute('data-cause-id');
+            const actionUrl = this.getAttribute('data-action-url');
+            
+            console.log(`准备删除事由ID: ${causeId}, 请求URL: ${actionUrl}`); // 添加日志
+            
+            if (confirm('确定要删除此事由吗？此操作将同时删除关联的处罚信息，且不可恢复。')) {
+                // 创建表单并提交
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = actionUrl;
+                form.style.display = 'none';
+                
+                const formTypeInput = document.createElement('input');
+                formTypeInput.type = 'hidden';
+                formTypeInput.name = 'form_type';
+                formTypeInput.value = 'delete_cause';
+                
+                const causeIdInput = document.createElement('input');
+                causeIdInput.type = 'hidden';
+                causeIdInput.name = 'cause_id';
+                causeIdInput.value = causeId;
+                
+                form.appendChild(formTypeInput);
+                form.appendChild(causeIdInput);
+                document.body.appendChild(form);
+                
+                // 提交表单并设置回调，确保页面刷新
+                form.addEventListener('submit', function() {
+                    // 设置一个短暂的超时，确保表单提交后再刷新
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                });
+                
+                form.submit();
+            }
+        });
+    });
+});
 </script>
