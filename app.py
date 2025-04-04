@@ -15,7 +15,7 @@ from wtforms import PasswordField
 from config import Config
 from models import (
     db, User, LegalRegulation, LegalStructure, 
-    LegalCause, LegalPunishment
+    LegalCause, LegalPunishment, LegalRegulationVersion
 )
 
 # 创建Flask应用
@@ -29,6 +29,14 @@ migrate = Migrate(app, db)
 # 初始化LoginManager
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# 在 app 初始化之后添加这段代码
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    """将换行符转换为 HTML <br> 标签"""
+    if not text:
+        return ""
+    return text.replace('\n', '<br>')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -76,45 +84,81 @@ class LegalRegulationView(SecureModelView):
     # 添加删除确认消息
     delete_message = '删除此法规将同时删除其包含的所有条文、事由及处罚信息。您确定要继续吗？'
 
-    column_list = ['name', 'document_number', 'issued_by', 'issued_date', 'effective_date', 'status']
-    column_searchable_list = ['name', 'document_number', 'issued_by']
-    column_filters = ['status', 'issued_date', 'effective_date', 'hierarchy_level', 'province', 'city']
-    form_excluded_columns = ['structures', 'causes']  # 排除关联字段，避免表单过于复杂
+    # 调整显示列表以匹配新字段
+    column_list = ['name', 'issuing_authority', 'publish_date', 'effective_date', 'hierarchy_level', 'validity_status']
+    
+    # 调整搜索字段
+    column_searchable_list = ['name', 'issuing_authority']
+    
+    # 调整过滤字段
+    column_filters = ['validity_status', 'publish_date', 'effective_date', 'hierarchy_level', 'province', 'city']
+    
+    # 排除关联字段，新增排除versions字段
+    form_excluded_columns = ['structures', 'causes', 'versions']
+    
+    # 更新字段标签
     column_labels = {
         'name': '法规名称',
-        'document_number': '文号',
-        'issued_by': '通过机构',
-        'approved_by': '批准机构',
-        'issued_date': '批准日期',
-        'effective_date': '生效日期',
-        'revision_date': '修订日期',
-        'hierarchy_level': '效力级别',
+        'issuing_authority': '制定机关',
+        'publish_date': '公布日期',
+        'effective_date': '施行日期',
+        'hierarchy_level': '法律效力位阶',
+        'validity_status': '时效性',
         'province': '省',
         'city': '市',
-        'status': '状态'
-    }
-    column_descriptions = {
-        'name': '法规的完整名称',
-        'document_number': '法规的文号',
-        'status': '状态（active-有效，archived-已归档）'
+        'original_enactment_date': '最初制定日期',
+        'latest_revision_date': '最新修订日期',
+        'current_version_id': '当前版本ID'
     }
     
-    # 批量操作
+    # 更新字段描述
+    column_descriptions = {
+        'name': '法规的完整名称',
+        'issuing_authority': '制定或发布法规的机关',
+        'validity_status': '时效性状态（有效、已废止、已修订等）'
+    }
+    
+    # 更新批量操作
     action_list = [
-        ('activate', '设为有效'),
-        ('archive', '归档')
+        ('set_valid', '设为有效'),
+        ('set_abolished', '设为已废止'),
+        ('set_revised', '设为已修订')
     ]
     
     can_view_details = True  # 启用详情视图
     
-    column_details_list = ['name', 'document_number', 'issued_by', 'issued_date', 'effective_date', 'status']
+    # 更新详情页显示的字段
+    column_details_list = ['name', 'issuing_authority', 'publish_date', 'effective_date', 
+                          'hierarchy_level', 'validity_status', 'province', 'city',
+                          'original_enactment_date', 'latest_revision_date']
     
-    # 在详情页面显示关联的条文和事由数量
     @property
     def details_template(self):
-        return 'admin/regulation_details.html'  # 自定义模板
+        return 'admin/regulation_details.html'  # 保持现有的自定义模板
 
-    # 添加内联模型
+class LegalRegulationVersionView(SecureModelView):
+    column_list = ['regulation.name', 'version_number', 'revision_date', 'status']
+    column_searchable_list = ['regulation.name', 'version_number']
+    column_filters = ['status', 'revision_date']
+    form_ajax_refs = {
+        'regulation': {
+            'fields': ['name'],
+            'page_size': 10
+        }
+    }
+    column_labels = {
+        'regulation.name': '法规名称',
+        'regulation': '法规',
+        'version_number': '版本号',
+        'revision_date': '修订日期',
+        'effective_date': '生效日期',
+        'publish_date': '公布日期',
+        'status': '状态',
+        'changes_summary': '变更摘要'
+    }
+
+# 添加到admin
+admin.add_view(LegalRegulationVersionView(LegalRegulationVersion, db.session, name='法规版本管理'))    
    
 
 # 条文管理视图
@@ -183,7 +227,7 @@ class LegalPunishmentView(SecureModelView):
         'subject_level': '主体级别',
         'punishment_target': '处罚对象',
         'punishment_details': '处罚明细',
-        'additional_notes': '补充说明'
+        'additional_notes': '行政行为'
     }
     form_ajax_refs = {
         'cause': {
@@ -330,16 +374,63 @@ def search_regulations():
 def regulation_detail(regulation_id):
     regulation = LegalRegulation.query.get_or_404(regulation_id)
     
-    # 获取条文
-    structures = LegalStructure.query.filter_by(regulation_id=regulation_id).all()
+    # 获取版本参数，如果未指定则默认使用当前版本
+    version_id = request.args.get('version_id', type=int)
     
-    # 获取事由
-    causes = LegalCause.query.filter_by(regulation_id=regulation_id).all()
+    # 确定要显示的版本
+    if not version_id and regulation.current_version_id:
+        version = LegalRegulationVersion.query.get(regulation.current_version_id)
+    elif version_id:
+        version = LegalRegulationVersion.query.get_or_404(version_id)
+        if version.regulation_id != regulation.id:
+            abort(404)
+    else:
+        # 找到最新版本
+        version = LegalRegulationVersion.query.filter_by(
+            regulation_id=regulation.id,
+            status='current'
+        ).first() or LegalRegulationVersion.query.filter_by(
+            regulation_id=regulation.id
+        ).order_by(LegalRegulationVersion.revision_date.desc()).first()
+    
+    # 查询条件：条文关联到当前法规
+    structures_query = LegalStructure.query.filter_by(regulation_id=regulation.id)
+    
+    # 如果版本ID存在，则进一步筛选版本相关的条文
+    if version and version.id:
+        structures_query = structures_query.filter(
+            db.or_(
+                LegalStructure.version_id == version.id,
+                LegalStructure.version_id.is_(None)  # 兼容尚未关联版本的旧数据
+            )
+        )
+    
+    structures = structures_query.all()
+    
+    # 类似地查询事由
+    causes_query = LegalCause.query.filter_by(regulation_id=regulation.id)
+    
+    if version and version.id:
+        causes_query = causes_query.filter(
+            db.or_(
+                LegalCause.version_id == version.id,
+                LegalCause.version_id.is_(None)  # 兼容尚未关联版本的旧数据
+            )
+        )
+    
+    causes = causes_query.all()
+    
+    # 获取所有版本
+    versions = LegalRegulationVersion.query.filter_by(
+        regulation_id=regulation.id
+    ).order_by(LegalRegulationVersion.revision_date.desc()).all()
     
     return render_template('regulations/detail.html', 
                            regulation=regulation, 
                            structures=structures,
-                           causes=causes)
+                           causes=causes,
+                           current_version=version,
+                           all_versions=versions)
 
 @app.route('/regulations/<int:regulation_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -360,25 +451,25 @@ def regulation_edit(regulation_id):
         form_type = request.form.get('form_type')
         
         if form_type == 'regulation':
-            # 处理法规基本信息的更新
+             # 处理法规基本信息的更新
             regulation.name = request.form.get('name')
-            regulation.document_number = request.form.get('document_number')
-            regulation.issued_by = request.form.get('issued_by')
-            regulation.approved_by = request.form.get('approved_by')
+            regulation.issuing_authority = request.form.get('issuing_authority')
             regulation.hierarchy_level = request.form.get('hierarchy_level')
             
             # 处理日期字段
-            if request.form.get('issued_date'):
-                regulation.issued_date = datetime.strptime(request.form.get('issued_date'), '%Y-%m-%d')
+            if request.form.get('publish_date'):
+                regulation.publish_date = datetime.strptime(request.form.get('publish_date'), '%Y-%m-%d')
             if request.form.get('effective_date'):
                 regulation.effective_date = datetime.strptime(request.form.get('effective_date'), '%Y-%m-%d')
-            if request.form.get('revision_date'):
-                regulation.revision_date = datetime.strptime(request.form.get('revision_date'), '%Y-%m-%d')
+            if request.form.get('original_enactment_date'):
+                regulation.original_enactment_date = datetime.strptime(request.form.get('original_enactment_date'), '%Y-%m-%d')
+            if request.form.get('latest_revision_date'):
+                regulation.latest_revision_date = datetime.strptime(request.form.get('latest_revision_date'), '%Y-%m-%d')
             
             # 更新其他字段
             regulation.province = request.form.get('province')
             regulation.city = request.form.get('city')
-            regulation.status = request.form.get('status')
+            regulation.validity_status = request.form.get('validity_status')
             
             try:
                 db.session.commit()
@@ -789,11 +880,11 @@ def regulations_by_level(level):
     
     # 添加排序
     if sort == 'date_asc':
-        base_query = base_query.order_by(LegalRegulation.issued_date.asc())
+        base_query = base_query.order_by(LegalRegulation.publish_date.asc())
     elif sort == 'name':
         base_query = base_query.order_by(LegalRegulation.name.asc())
     else:  # 默认为date_desc
-        base_query = base_query.order_by(LegalRegulation.issued_date.desc())
+        base_query = base_query.order_by(LegalRegulation.publish_date.desc())
     
     pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
     regulations = pagination.items

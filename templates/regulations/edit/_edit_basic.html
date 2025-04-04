@@ -9,45 +9,27 @@
                 <input type="text" id="name" name="name" class="form-control" value="{{ regulation.name }}" required>
             </div>
             <div class="col-md-6 form-group">
-                <label for="document_number" class="form-label">文号</label>
-                <input type="text" id="document_number" name="document_number" class="form-control" value="{{ regulation.document_number or '' }}">
+                <label for="issuing_authority" class="form-label">制定机关</label>
+                <input type="text" id="issuing_authority" name="issuing_authority" class="form-control" value="{{ regulation.issuing_authority or '' }}">
             </div>
         </div>
         
         <div class="row">
             <div class="col-md-6 form-group">
-                <label for="issued_by" class="form-label">通过机构</label>
-                <input type="text" id="issued_by" name="issued_by" class="form-control" value="{{ regulation.issued_by or '' }}">
+                <label for="publish_date" class="form-label">公布日期</label>
+                <input type="text" id="publish_date" name="publish_date" class="form-control date-picker" value="{{ regulation.publish_date.strftime('%Y-%m-%d') if regulation.publish_date else '' }}">
             </div>
             <div class="col-md-6 form-group">
-                <label for="approved_by" class="form-label">批准机构</label>
-                <input type="text" id="approved_by" name="approved_by" class="form-control" value="{{ regulation.approved_by or '' }}">
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label for="issued_date" class="form-label">批准日期</label>
-                <input type="text" id="issued_date" name="issued_date" class="form-control date-picker" value="{{ regulation.issued_date.strftime('%Y-%m-%d') if regulation.issued_date else '' }}">
-            </div>
-            <div class="col-md-4 form-group">
-                <label for="effective_date" class="form-label">生效日期</label>
+                <label for="effective_date" class="form-label">施行日期</label>
                 <input type="text" id="effective_date" name="effective_date" class="form-control date-picker" value="{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '' }}">
             </div>
-            <div class="col-md-4 form-group">
-                <label for="revision_date" class="form-label">修订日期</label>
-                <input type="text" id="revision_date" name="revision_date" class="form-control date-picker" value="{{ regulation.revision_date.strftime('%Y-%m-%d') if regulation.revision_date else '' }}">
-            </div>
         </div>
-    </div>
-    
-    <div class="form-section">
-        <h3 class="section-title"><i class="bi bi-tags"></i> 分类信息</h3>
+        
         <div class="row">
             <div class="col-md-6 form-group">
-                <label for="hierarchy_level" class="form-label">效力级别</label>
+                <label for="hierarchy_level" class="form-label">法律效力位阶</label>
                 <select id="hierarchy_level" name="hierarchy_level" class="form-control">
-                    <option value="">-- 选择效力级别 --</option>
+                    <option value="">-- 选择效力位阶 --</option>
                     <option value="法律" {% if regulation.hierarchy_level == '法律' %}selected{% endif %}>法律</option>
                     <option value="行政法规" {% if regulation.hierarchy_level == '行政法规' %}selected{% endif %}>行政法规</option>
                     <option value="部门规章" {% if regulation.hierarchy_level == '部门规章' %}selected{% endif %}>部门规章</option>
@@ -58,11 +40,11 @@
                 </select>
             </div>
             <div class="col-md-6 form-group">
-                <label for="status" class="form-label">状态</label>
-                <select id="status" name="status" class="form-control">
-                    <option value="active" {% if regulation.status == 'active' %}selected{% endif %}>有效</option>
-                    <option value="archived" {% if regulation.status == 'archived' %}selected{% endif %}>已归档</option>
-                    <option value="repealed" {% if regulation.status == 'repealed' %}selected{% endif %}>已废止</option>
+                <label for="validity_status" class="form-label">时效性</label>
+                <select id="validity_status" name="validity_status" class="form-control">
+                    <option value="有效" {% if regulation.validity_status == '有效' %}selected{% endif %}>有效</option>
+                    <option value="已废止" {% if regulation.validity_status == '已废止' %}selected{% endif %}>已废止</option>
+                    <option value="已修订" {% if regulation.validity_status == '已修订' %}selected{% endif %}>已修订</option>
                 </select>
             </div>
         </div>
