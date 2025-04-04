@@ -176,7 +176,7 @@ def format_only_article(row):
     return f"第{row['条']}条" if row['条'] and row['条'] != '0' else ''
 
 def import_law_structure_to_db(file_path):
-    """从DOCX文件导入法律结构到数据库"""
+    """从DOCX文件导入法律结构到数据库，并更新step_id"""
     filename = os.path.basename(file_path)
     regulation_name, version_number = parse_filename(filename)
     if not regulation_name:
@@ -247,6 +247,12 @@ def import_law_structure_to_db(file_path):
 
             db.session.commit()
             logger.info(f"成功导入法规 {regulation_name} 版本 {version.version_number} 的 {structure_count} 条条文")
+
+            # 更新 step_id 为 2
+            version.step_id = 2
+            db.session.commit()
+            logger.info(f"成功更新法规 {regulation_name} 版本 {version.version_number} 的 step_id 为 2")
+
             return structure_count
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -275,3 +281,5 @@ if __name__ == "__main__":
         logger.info(f"已创建文件夹 {folder_path}，请将法律DOCX文件放入其中，然后重新运行程序")
     else:
         process_law_files(folder_path)
+
+

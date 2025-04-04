@@ -34,6 +34,9 @@ class LegalRegulationVersion(db.Model):
     publish_date = db.Column(db.DateTime)      # 该版本公布日期
     status = db.Column(db.String(20), default='current')  # 状态如 "current", "superseded", "archived"
     changes_summary = db.Column(db.Text)       # 主要变更摘要
+
+    # 新增 step_id 字段
+    step_id = db.Column(db.Integer, default=1)  # 默认值为1
     
     # 反向关联到法规
     regulation = relationship('LegalRegulation', back_populates='versions')
