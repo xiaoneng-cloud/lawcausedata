@@ -356,8 +356,7 @@ def search_regulations():
     if keyword:
         query = query.filter(
             db.or_(
-                LegalRegulation.name.like(f'%{keyword}%'),
-                LegalRegulation.source.like(f'%{keyword}%')
+                LegalRegulation.name.like(f'%{keyword}%')
             )
         )
     
@@ -871,10 +870,11 @@ def regulations_by_level(level):
     
     # 添加关键词搜索
     if keyword:
+        # 更新查询使用现有字段
         base_query = base_query.filter(
             db.or_(
                 LegalRegulation.name.like(f'%{keyword}%'),
-                LegalRegulation.document_number.like(f'%{keyword}%')
+                LegalRegulation.issuing_authority.like(f'%{keyword}%')
             )
         )
     

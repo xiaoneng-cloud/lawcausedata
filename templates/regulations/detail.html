@@ -523,7 +523,7 @@
                 <a href="{% if request.args.get('source') == 'level' %}{{ url_for('regulations_by_level', level=request.args.get('level')) }}{% else %}{{ url_for('search_regulations') }}{% endif %}" class="back-button">
                     <i class="bi bi-arrow-left"></i> 返回列表
                 </a>
-                <h2 class="regulation-title text-center">{{ regulation.name }}</h2>
+                <h2 class="regulation-title text-center">{{ regulation.name }} {{ regulation.publish_date.strftime('%Y') if regulation.publish_date else '' }}</h2>
             </div>
         </div>
     </div>
@@ -566,16 +566,6 @@
                         <span class="info-label">施行日期：</span>
                         <span class="info-value">{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}</span>
                     </div>
-                    <div class="metadata-item">
-                        <i class="bi bi-calendar-plus"></i>
-                        <span class="info-label">最初制定：</span>
-                        <span class="info-value">{{ regulation.original_enactment_date.strftime('%Y-%m-%d') if regulation.original_enactment_date else '未知' }}</span>
-                    </div>
-                    <div class="metadata-item">
-                        <i class="bi bi-calendar-minus"></i>
-                        <span class="info-label">最新修订：</span>
-                        <span class="info-value">{{ regulation.latest_revision_date.strftime('%Y-%m-%d') if regulation.latest_revision_date else '无修订' }}</span>
-                    </div>
                 </div>
                 <!-- 添加编辑按钮，仅对已登录用户显示 -->
                 {% if current_user.is_authenticated %}
@@ -587,6 +577,7 @@
                 {% endif %}
             </div>
         </div>
+                
         
         <!-- 添加版本历史标签页 -->
         <ul class="nav nav-tabs" id="regulationTabs">
