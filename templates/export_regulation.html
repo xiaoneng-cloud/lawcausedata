@@ -1,0 +1,301 @@
+{% extends 'base.html' if 'base.html' in templates else 'index.html' %}
+
+{% block title %}{{ regulation.name }} - 导出数据{% endblock %}
+
+{% block content %}
+<div class="header-wrapper">
+    <div class="app-container">
+        <div class="regulation-header">
+            <a href="{{ url_for('regulation_detail', regulation_id=regulation.id) }}" class="back-button">
+                <i class="bi bi-arrow-left"></i> 返回详情
+            </a>
+            <h2 class="regulation-title text-center">{{ regulation.name }} - 导出数据</h2>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="export-card">
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-download"></i> 导出设置</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('export_regulation_data') }}" method="post" id="exportForm">
+                    <input type="hidden" name="regulation_id" value="{{ regulation.id }}">
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label for="version_id" class="form-label">选择版本:</label>
+                        </div>
+                        <div class="col-md-9">
+                            <select name="version_id" id="version_id" class="form-select">
+                                <option value="">全部数据</option>
+                                {% for version in versions %}
+                                <option value="{{ version.id }}" {% if regulation.current_version_id == version.id %}selected{% endif %}>
+                                    {{ version.version_number }} {% if version.status == 'current' %}(当前版本){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">数据内容:</label>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-check">
+                                <input class="form-check-input content-checkbox" type="checkbox" name="content" value="causes" id="check-causes" checked data-target="causes-fields-section">
+                                <label class="form-check-label" for="check-causes">
+                                    事由表 <span class="badge bg-secondary">{{ causes_count }} 条记录</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input content-checkbox" type="checkbox" name="content" value="punishments" id="check-punishments" checked data-target="punishments-fields-section">
+                                <label class="form-check-label" for="check-punishments">
+                                    处罚表 <span class="badge bg-secondary">{{ punishments_count }} 条记录</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 事由表字段选择 -->
+                    <div class="row mb-4 fields-section" id="causes-fields-section">
+                        <div class="col-md-3">
+                            <label class="form-label">事由表字段:</label>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary select-all-btn" data-target="cause_fields">全选</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-btn" data-target="cause_fields">取消全选</button>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                {% for field in cause_fields %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" 
+                                               name="cause_fields" value="{{ field.id }}" 
+                                               id="cause-field-{{ field.id }}" 
+                                               {% if field.default %}checked{% endif %}>
+                                        <label class="form-check-label" for="cause-field-{{ field.id }}">
+                                            {{ field.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 处罚表字段选择 -->
+                    <div class="row mb-4 fields-section" id="punishments-fields-section">
+                        <div class="col-md-3">
+                            <label class="form-label">处罚表字段:</label>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary select-all-btn" data-target="punishment_fields">全选</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-btn" data-target="punishment_fields">取消全选</button>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                {% for field in punishment_fields %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" 
+                                               name="punishment_fields" value="{{ field.id }}" 
+                                               id="punishment-field-{{ field.id }}"
+                                               {% if field.default %}checked{% endif %}>
+                                        <label class="form-check-label" for="punishment-field-{{ field.id }}">
+                                            {{ field.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">文件格式:</label>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="excel" id="format-excel" checked>
+                                <label class="form-check-label" for="format-excel">
+                                    Excel (.xlsx)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="csv" id="format-csv">
+                                <label class="form-check-label" for="format-csv">
+                                    CSV (.csv) <small class="text-muted">支持中文，使用UTF-8-BOM编码</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span>导出的文件将包含选定的数据，每种数据类型会生成独立的工作表或文件。</span>
+                        <ul class="mt-2 mb-0">
+                            <li>选择Excel格式时，将生成单个Excel文件，包含多个工作表</li>
+                            <li>选择CSV格式时，如果选择多个数据表，将生成ZIP压缩包</li>
+                            <li>大量数据导出可能需要较长时间，请耐心等待</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary" id="exportButton">
+                            <i class="bi bi-download"></i> 导出数据
+                        </button>
+                        <div class="progress mt-3 d-none" id="exportProgress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" aria-valuenow="100" aria-valuemin="0" 
+                                 aria-valuemax="100" style="width: 100%">
+                                正在处理导出请求...
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .export-card {
+            max-width: 800px;
+            margin: 0 auto;
+            margin-top: -1rem;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+        
+        .card-header {
+            border-radius: 8px 8px 0 0 !important;
+            padding: 1rem 1.5rem;
+        }
+        
+        .fields-section {
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 处理内容选择框变化
+        const contentCheckboxes = document.querySelectorAll('.content-checkbox');
+        const fieldsContainers = document.querySelectorAll('.fields-section');
+        const exportButton = document.getElementById('exportButton');
+        const exportForm = document.getElementById('exportForm');
+        const exportProgress = document.getElementById('exportProgress');
+        
+        // 根据内容选择显示/隐藏字段选择区域
+        function updateFieldsVisibility() {
+            contentCheckboxes.forEach(checkbox => {
+                const targetId = checkbox.getAttribute('data-target');
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.style.display = checkbox.checked ? 'flex' : 'none';
+                }
+            });
+            
+            // 确保至少有一个内容被选中
+            const anyContentChecked = Array.from(contentCheckboxes).some(cb => cb.checked);
+            exportButton.disabled = !anyContentChecked;
+            
+            if (!anyContentChecked) {
+                exportButton.title = "请至少选择一种要导出的内容";
+            } else {
+                exportButton.title = "";
+            }
+        }
+        
+        contentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateFieldsVisibility);
+        });
+        
+        // 全选/取消全选按钮
+        const selectAllBtns = document.querySelectorAll('.select-all-btn');
+        const deselectAllBtns = document.querySelectorAll('.deselect-all-btn');
+        
+        selectAllBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-target');
+                const checkboxes = document.querySelectorAll(`input[name="${target}"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                });
+            });
+        });
+        
+        deselectAllBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-target');
+                const checkboxes = document.querySelectorAll(`input[name="${target}"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+            });
+        });
+        
+        // 确保每个分组至少有一个字段被选中
+        function validateFieldSelection() {
+            const causeContent = document.getElementById('check-causes').checked;
+            const punishmentContent = document.getElementById('check-punishments').checked;
+            
+            let valid = true;
+            let errorMessage = '';
+            
+            if (causeContent) {
+                const causeFields = document.querySelectorAll('input[name="cause_fields"]:checked');
+                if (causeFields.length === 0) {
+                    valid = false;
+                    errorMessage = '请至少选择一个事由表字段';
+                }
+            }
+            
+            if (valid && punishmentContent) {
+                const punishmentFields = document.querySelectorAll('input[name="punishment_fields"]:checked');
+                if (punishmentFields.length === 0) {
+                    valid = false;
+                    errorMessage = '请至少选择一个处罚表字段';
+                }
+            }
+            
+            return { valid, errorMessage };
+        }
+        
+        // 提交前验证
+        exportForm.addEventListener('submit', function(e) {
+            const validation = validateFieldSelection();
+            
+            if (!validation.valid) {
+                e.preventDefault();
+                alert(validation.errorMessage);
+                return false;
+            }
+            
+            // 显示进度条
+            exportButton.disabled = true;
+            exportProgress.classList.remove('d-none');
+            return true;
+        });
+        
+        // 初始化页面状态
+        updateFieldsVisibility();
+    });
+</script>
+{% endblock %}

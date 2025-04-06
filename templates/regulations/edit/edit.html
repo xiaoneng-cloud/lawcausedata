@@ -1,3 +1,4 @@
+<!-- templates/regulations/edit/edit.html 的修改 -->
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -17,6 +18,15 @@
                     <i class="bi bi-arrow-left"></i> 返回详情
                 </a>
                 <h2 class="regulation-title text-center">编辑 - {{ regulation.name }}</h2>
+                <div class="version-badge-container">
+                    <span class="version-badge">当前编辑版本: {{ current_version.version_number }}</span>
+                    <button type="button" class="btn btn-sm btn-light ms-2" data-bs-toggle="modal" data-bs-target="#switchVersionModal">
+                        <i class="bi bi-arrow-repeat"></i> 切换版本
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#newVersionModal">
+                        <i class="bi bi-plus-circle"></i> 创建新版本
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -42,6 +52,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="version-tab" data-bs-toggle="tab" data-bs-target="#version" type="button" role="tab" aria-controls="version" aria-selected="false">
+                    <i class="bi bi-clock-history"></i> 版本信息
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="structures-tab" data-bs-toggle="tab" data-bs-target="#structures" type="button" role="tab" aria-controls="structures" aria-selected="false">
                     <i class="bi bi-list-ol"></i> 条文管理 <span class="badge rounded-pill bg-light text-dark">{{ structures|length }}</span>
                 </button>
@@ -60,6 +75,11 @@
                 {% include 'regulations/edit/_edit_basic.html' %}
             </div>
             
+            <!-- 版本信息标签 -->
+            <div class="tab-pane fade" id="version" role="tabpanel" aria-labelledby="version-tab">
+                {% include 'regulations/edit/_edit_version.html' %}
+            </div>
+            
             <!-- 条文管理标签 -->
             <div class="tab-pane fade" id="structures" role="tabpanel" aria-labelledby="structures-tab">
                 {% include 'regulations/edit/_edit_structures.html' %}
@@ -72,7 +92,121 @@
         </div>
     </div>
 
-    <!-- 模态框部分 -->
+    <!-- 切换版本模态框 -->
+    <div class="modal fade" id="switchVersionModal" tabindex="-1" aria-labelledby="switchVersionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="switchVersionModalLabel">切换编辑版本</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        {% for version in all_versions %}
+                            <a href="{{ url_for('regulation_edit', regulation_id=regulation.id, version_id=version.id) }}" 
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                                    {% if version.id == current_version.id %}active{% endif %}">
+                                <div>
+                                    <strong>{{ version.version_number }}</strong>
+                                    <br>
+                                    <small>修订日期: {{ version.revision_date.strftime('%Y-%m-%d') if version.revision_date else '未知' }}</small>
+                                </div>
+                                {% if version.status == 'current' %}
+                                    <span class="badge bg-success">当前版本</span>
+                                {% elif version.status == 'superseded' %}
+                                    <span class="badge bg-secondary">历史版本</span>
+                                {% elif version.status == 'draft' %}
+                                    <span class="badge bg-warning text-dark">草稿</span>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建版本模态框 -->
+    <!-- 修改新版本模态框中的版本号默认值 -->
+    <div class="modal fade" id="newVersionModal" tabindex="-1" aria-labelledby="newVersionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newVersionModalLabel">创建新版本</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ url_for('regulation_edit', regulation_id=regulation.id) }}">
+                    <input type="hidden" name="form_type" value="new_version">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            创建新版本将允许您独立编辑法规的不同版本内容，同时保留历史版本记录。
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="new-version-number" class="form-label">版本号</label>
+                                <input type="text" id="new-version-number" name="version_number" class="form-control" value="{{ datetime.now().year }}年版" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="new-status" class="form-label">状态</label>
+                                <select id="new-status" name="status" class="form-control">
+                                    <option value="draft">草稿</option>
+                                    <option value="current">当前版本</option>
+                                    <option value="superseded">历史版本</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label for="new-revision-date" class="form-label">修订日期</label>
+                                <input type="text" id="new-revision-date" name="revision_date" class="form-control date-picker" value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="new-effective-date" class="form-label">生效日期</label>
+                                <input type="text" id="new-effective-date" name="effective_date" class="form-control date-picker" value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label for="new-publish-date" class="form-label">公布日期</label>
+                                <input type="text" id="new-publish-date" name="publish_date" class="form-control date-picker" value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new-changes-summary" class="form-label">变更摘要</label>
+                            <textarea id="new-changes-summary" name="changes_summary" class="form-control" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <label class="form-label">内容处理选项</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="copy_option" id="copy-current" value="copy_current" checked>
+                                <label class="form-check-label" for="copy-current">
+                                    复制当前版本内容（包括条文、事由和处罚）
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="copy_option" id="empty-version" value="empty_version">
+                                <label class="form-check-label" for="empty-version">
+                                    创建空白版本（稍后手动添加内容）
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">创建新版本</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 其他模态框 -->
     {% include 'regulations/edit/_edit_modals.html' %}
 
     <!-- 回到顶部按钮 -->

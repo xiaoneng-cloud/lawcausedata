@@ -523,7 +523,15 @@
                 <a href="{% if request.args.get('source') == 'level' %}{{ url_for('regulations_by_level', level=request.args.get('level')) }}{% else %}{{ url_for('search_regulations') }}{% endif %}" class="back-button">
                     <i class="bi bi-arrow-left"></i> 返回列表
                 </a>
-                <h2 class="regulation-title text-center">{{ regulation.name }} {{ regulation.publish_date.strftime('%Y') if regulation.publish_date else '' }}</h2>
+                <h2 class="regulation-title text-center">
+                    {{ regulation.name }} 
+                    {% if current_version %}
+                    {{ current_version.version_number }}
+                    {% else %}
+                    {{ regulation.publish_date.strftime('%Y') if regulation.publish_date else '' }}
+                    {% endif %}
+                </h2>
+                
             </div>
         </div>
     </div>
@@ -549,22 +557,30 @@
                             <span class="status-badge">{{ regulation.validity_status }}</span>
                         </span>
                     </div>
-                    <div class="metadata-item">
-                        <i class="bi bi-geo-alt"></i>
-                        <span class="info-label">地区：</span>
-                        <span class="info-value">{{ regulation.province or '' }}{{ ' / ' if regulation.province and regulation.city else '' }}{{ regulation.city or '' }}</span>
-                    </div>
+                    
                 </div>
                 <div class="col-md-6 metadata-col">
                     <div class="metadata-item">
                         <i class="bi bi-calendar-event"></i>
                         <span class="info-label">公布日期：</span>
-                        <span class="info-value">{{ regulation.publish_date.strftime('%Y-%m-%d') if regulation.publish_date else '未知' }}</span>
+                        <span class="info-value">
+                            {% if current_version and current_version.publish_date %}
+                                {{ current_version.publish_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                {{ regulation.publish_date.strftime('%Y-%m-%d') if regulation.publish_date else '未知' }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="metadata-item">
                         <i class="bi bi-calendar-check"></i>
                         <span class="info-label">施行日期：</span>
-                        <span class="info-value">{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}</span>
+                        <span class="info-value">
+                            {% if current_version and current_version.effective_date %}
+                                {{ current_version.effective_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                {{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '未知' }}
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
                 <!-- 添加编辑按钮，仅对已登录用户显示 -->
@@ -572,6 +588,9 @@
                 <div class="text-end mt-3">
                     <a href="{{ url_for('regulation_edit', regulation_id=regulation.id, source='level', level=current_level) }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-pencil-square"></i> 编辑法规
+                    </a>
+                    <a href="{{ url_for('export_regulation_page', regulation_id=regulation.id) }}" class="btn btn-success btn-sm">
+                        <i class="bi bi-download"></i> 导出数据
                     </a>
                 </div>
                 {% endif %}

@@ -217,6 +217,57 @@ body {
     background: transparent;
     border-radius: var(--border-radius);
 }
+/* 版本相关样式 */
+.version-badge-container {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.version-badge {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.version-status-badge {
+    margin-bottom: 1rem;
+}
+
+.version-history-container {
+    background-color: var(--light-accent);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.version-history-container .list-group-item {
+    margin-bottom: 0.75rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 1rem;
+    transition: var(--transition);
+}
+
+.version-history-container .list-group-item:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.version-history-container .list-group-item.active {
+    background-color: rgba(26, 60, 110, 0.05);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.version-history-container h5 {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
 
 /* 条文和事由卡片样式 */
 .item-card {
