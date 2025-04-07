@@ -11,6 +11,12 @@ from flask import flash
 import json
 from datetime import datetime
 from wtforms import PasswordField
+from flask import send_file, Response
+from io import BytesIO, StringIO
+import csv
+import pandas as pd
+import tempfile
+from sqlalchemy import or_
 
 from config import Config
 from models import (
@@ -370,75 +376,91 @@ def search_regulations():
 
 @app.route('/export/<int:regulation_id>', methods=['GET'])
 def export_regulation_page(regulation_id):
-    """导出法规数据页面"""
-    regulation = LegalRegulation.query.get_or_404(regulation_id)
-    
-    # 获取该法规的所有版本
-    versions = LegalRegulationVersion.query.filter_by(regulation_id=regulation.id).order_by(
-        LegalRegulationVersion.revision_date.desc()
-    ).all()
-    
-    # 获取可选字段
-    cause_fields = [
-        {'id': 'code', 'name': '编号', 'default': True},
-        {'id': 'description', 'name': '事由', 'default': True},
-        {'id': 'violation_type', 'name': '违则', 'default': True},
-        {'id': 'violation_clause', 'name': '违则条款', 'default': True},
-        {'id': 'behavior', 'name': '行为', 'default': True},
-        {'id': 'illegal_behavior', 'name': '违法行为', 'default': True},
-        {'id': 'penalty_type', 'name': '罚则', 'default': True},
-        {'id': 'penalty_clause', 'name': '罚则条款', 'default': True},
-        {'id': 'severity', 'name': '严重程度', 'default': True}
-    ]
-    
-    punishment_fields = [
-        {'id': 'cause_code', 'name': '事由编号', 'default': True},
-        {'id': 'cause_description', 'name': '事由', 'default': True},
-        {'id': 'circumstance', 'name': '情形', 'default': True},
-        {'id': 'punishment_type', 'name': '处罚类型', 'default': True},
-        {'id': 'progressive_punishment', 'name': '递进处罚', 'default': True},
-        {'id': 'industry', 'name': '行业', 'default': True},
-        {'id': 'subject_level', 'name': '主体级别', 'default': True},
-        {'id': 'punishment_target', 'name': '处罚对象', 'default': True},
-        {'id': 'punishment_details', 'name': '处罚明细', 'default': True},
-        {'id': 'additional_notes', 'name': '行政行为', 'default': True}
-    ]
-    
-    # 统计数据量
-    current_version_id = regulation.current_version_id
-    causes_count = LegalCause.query.filter_by(
-        regulation_id=regulation.id, 
-        version_id=current_version_id
-    ).count()
-    
-    punishments_count = LegalPunishment.query.join(
-        LegalCause, LegalPunishment.cause_id == LegalCause.id
-    ).filter(
-        LegalCause.regulation_id == regulation.id,
-        LegalCause.version_id == current_version_id
-    ).count()
-    
-    return render_template('export_regulation.html', 
-                           regulation=regulation, 
-                           versions=versions,
-                           cause_fields=cause_fields,
-                           punishment_fields=punishment_fields,
-                           causes_count=causes_count,
-                           punishments_count=punishments_count)
+    print(f"开始处理导出页面请求：regulation_id={regulation_id}")
+    try:
+        """导出法规数据页面"""
+        regulation = LegalRegulation.query.get_or_404(regulation_id)
+        
+        # 获取该法规的所有版本
+        versions = LegalRegulationVersion.query.filter_by(regulation_id=regulation.id).order_by(
+            LegalRegulationVersion.revision_date.desc()
+        ).all()
+        
+        # 获取可选字段
+        cause_fields = [
+            {'id': 'code', 'name': '编号', 'default': True},
+            {'id': 'description', 'name': '事由', 'default': True},
+            {'id': 'violation_type', 'name': '违则', 'default': True},
+            {'id': 'violation_clause', 'name': '违则条款', 'default': True},
+            {'id': 'behavior', 'name': '行为', 'default': True},
+            {'id': 'illegal_behavior', 'name': '违法行为', 'default': True},
+            {'id': 'penalty_type', 'name': '罚则', 'default': True},
+            {'id': 'penalty_clause', 'name': '罚则条款', 'default': True},
+            {'id': 'severity', 'name': '严重程度', 'default': True}
+        ]
+        
+        punishment_fields = [
+            {'id': 'cause_code', 'name': '事由编号', 'default': True},
+            {'id': 'cause_description', 'name': '事由', 'default': True},
+            {'id': 'circumstance', 'name': '情形', 'default': True},
+            {'id': 'punishment_type', 'name': '处罚类型', 'default': True},
+            {'id': 'progressive_punishment', 'name': '递进处罚', 'default': True},
+            {'id': 'industry', 'name': '行业', 'default': True},
+            {'id': 'subject_level', 'name': '主体级别', 'default': True},
+            {'id': 'punishment_target', 'name': '处罚对象', 'default': True},
+            {'id': 'punishment_details', 'name': '处罚明细', 'default': True},
+            {'id': 'additional_notes', 'name': '行政行为', 'default': True}
+        ]
+        
+        # 统计数据量
+        current_version_id = regulation.current_version_id
+        causes_count = LegalCause.query.filter_by(
+            regulation_id=regulation.id, 
+            version_id=current_version_id
+        ).count()
+        
+        punishments_count = LegalPunishment.query.join(
+            LegalCause, LegalPunishment.cause_id == LegalCause.id
+        ).filter(
+            LegalCause.regulation_id == regulation.id,
+            LegalCause.version_id == current_version_id
+        ).count()
+        print("准备渲染export_regulation.html模板")
+        return render_template('export_regulation.html', 
+                            regulation=regulation, 
+                            versions=versions,
+                            cause_fields=cause_fields,
+                            punishment_fields=punishment_fields,
+                            causes_count=causes_count,
+                            punishments_count=punishments_count)
+    except Exception as e:
+        print(f"处理导出页面时出错：{str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        # 临时直接返回错误信息而不是重定向
+        return f"导出页面错误：{str(e)}"
 
+# 替换现有的export_regulation_data函数
 @app.route('/export/data', methods=['POST'])
 def export_regulation_data():
     """处理导出法规数据的请求"""
+    print("开始处理导出请求")
+    print(f"表单数据: {request.form}")
+    
     regulation_id = request.form.get('regulation_id', type=int)
     version_id = request.form.get('version_id', type=int)
     export_format = request.form.get('format', 'excel')
     export_content = request.form.getlist('content')
+    
+    print(f"regulation_id: {regulation_id}, version_id: {version_id}")
+    print(f"export_format: {export_format}, export_content: {export_content}")
     
     # 获取选择的字段
     cause_fields = request.form.getlist('cause_fields')
     punishment_fields = request.form.getlist('punishment_fields')
     
     if not regulation_id:
+        flash('未指定法规ID', 'error')
         return redirect(url_for('search_regulations'))
     
     # 获取法规和版本信息
@@ -448,6 +470,7 @@ def export_regulation_data():
     if version_id:
         version = LegalRegulationVersion.query.get_or_404(version_id)
         if version.regulation_id != regulation.id:
+            flash('版本与法规不匹配', 'error')
             return redirect(url_for('regulation_detail', regulation_id=regulation_id))
     else:
         # 如果没有指定版本，使用当前版本
@@ -478,19 +501,24 @@ def export_regulation_data():
                             filename_base)
     
     # 默认返回到详情页
+    flash('导出格式不支持', 'error')
     return redirect(url_for('regulation_detail', regulation_id=regulation_id))
 
+# 修复后的export_as_excel函数
 def export_as_excel(regulation, version, version_condition, export_content, 
                    cause_fields, punishment_fields, filename_base):
     """导出为Excel格式"""
     
     # 创建临时文件
-    with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp:
-        temp_path = temp.name
+    temp_file = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+    temp_path = temp_file.name
+    temp_file.close()
     
     # 使用xlsxwriter引擎创建Excel文件
-    with pd.ExcelWriter(temp_path, engine='xlsxwriter') as writer:
-        # 导出案由表
+    writer = pd.ExcelWriter(temp_path, engine='xlsxwriter')
+    
+    try:
+        # 导出事由表
         if 'causes' in export_content and cause_fields:
             # 构建字段映射
             field_map = {
@@ -604,17 +632,35 @@ def export_as_excel(regulation, version, version_condition, export_content,
                 for i, column in enumerate(df_punishments.columns):
                     column_width = max(df_punishments[column].astype(str).map(len).max(), len(column)) + 2
                     worksheet.set_column(i, i, column_width)
+        
+        # 保存文件
+        writer.close()
+        
+        # 发送文件
+        return send_file(
+            temp_path,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f"{filename_base}.xlsx"
+        )
     
-    # 发送文件
-    return send_file(
-        temp_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f"{filename_base}.xlsx",
-        # Flask 2.x版本使用:
-        # attachment_filename=f"{filename_base}.xlsx"
-    )
+    except Exception as e:
+        # 如果发生错误，确保关闭writer并删除临时文件
+        try:
+            writer.close()
+        except:
+            pass
+        
+        import os
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        
+        flash(f'导出Excel失败: {str(e)}', 'error')
+        return redirect(url_for('regulation_detail', regulation_id=regulation.id))
 
+# 修复后的export_as_csv函数
 def export_as_csv(regulation, version, version_condition, export_content, 
                  cause_fields, punishment_fields, filename_base):
     """导出为CSV格式"""
@@ -858,6 +904,7 @@ def export_as_csv(regulation, version, version_condition, export_content,
         )
     
     # 默认返回到详情页
+    flash('未选择导出内容', 'error')
     return redirect(url_for('regulation_detail', regulation_id=regulation.id))
     
 # 法规详情

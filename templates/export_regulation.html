@@ -1,6 +1,218 @@
-{% extends 'base.html' if 'base.html' in templates else 'index.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{{ regulation.name }} - 导出数据{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #0f2b50;      /* 更深的主色调 */
+        --primary-light: #1a3c6e;      /* 原主色调 */
+        --secondary-color: #f5f7fa;    /* 稍微暗一点的背景色 */
+        --accent-color: #a5801d;       /* 更深的金色 */
+        --accent-light: #c59c34;       /* 原金色 */
+        --dark-color: #1e2838;         /* 更深的深色 */
+        --light-accent: #e1e9f4;       /* 更暗的浅蓝色强调 */
+        --text-primary: #24292e;       /* 更深的文本色 */
+        --text-secondary: #5c6370;     /* 更深的次要文本色 */
+        --border-radius: 6px;          /* 减小圆角 */
+        --card-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* 更轻量的页头 */
+    .header-wrapper {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #081728 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 1.5rem 0; /* 减小内边距 */
+        box-shadow: 0 1px 5px rgba(0,0,0,0.1); /* 更轻的阴影 */
+    }
+    
+    .header-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
+        transform: rotate(25deg);
+        opacity: 0.7; /* 降低背景图案的不透明度 */
+    }
+    
+    .regulation-header {
+        color: white;
+        padding: 1rem;
+        border-radius: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .regulation-title {
+        font-weight: 600; /* 减轻字重 */
+        margin-bottom: 1rem;
+        font-size: 1.6rem;
+        position: relative;
+    }
+    
+    .regulation-title::after {
+        content: '';
+        display: block;
+        width: 50px;
+        height: 2px; /* 减小下划线高度 */
+        background-color: var(--accent-color);
+        margin-top: 8px;
+    }
+    
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        padding: 6px 12px;
+        border-radius: var(--border-radius);
+        transition: background-color 0.2s ease, color 0.2s ease; /* 简化过渡效果，防止抖动 */
+    }
+    
+    .back-button:hover {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+    
+    .back-button i {
+        margin-right: 6px;
+    }
+    
+    .export-card {
+        max-width: 800px;
+        margin: 0 auto;
+        margin-top: -1rem; /* 稍微减小负边距 */
+    }
+    
+    .card {
+        border: none;
+        box-shadow: var(--card-shadow);
+        border-radius: var(--border-radius);
+        border-top: 2px solid var(--primary-color); /* 减小边框厚度 */
+    }
+    
+    .card-header {
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        padding: 1rem 1.25rem;
+        background-color: #f8f9fa; /* 更轻的标题背景色 */
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    .fields-section {
+        padding: 1.2rem;
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        margin-top: 0.75rem;
+        border: 1px solid #eaecef; /* 更轻的边框 */
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        padding: 0.5rem 1.25rem;
+        border-radius: var(--border-radius);
+        transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; /* 简化过渡效果 */
+    }
+    
+    .btn-primary:hover {
+        background-color: #0a1f3d;
+        border-color: #0a1f3d;
+        transform: translateY(-1px); /* 减小悬停效果 */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 更轻的阴影 */
+    }
+    
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        background-color: transparent;
+        font-weight: 500;
+        transition: background-color 0.2s ease, color 0.2s ease; /* 简化过渡效果 */
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        color: var(--text-secondary);
+        border-color: #cfd4da;
+        background-color: transparent;
+        font-weight: 500;
+        transition: background-color 0.2s ease, color 0.2s ease; /* 简化过渡效果 */
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #e9ecef;
+        color: var(--text-primary);
+    }
+    
+    .select-all-btn, .deselect-all-btn {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .alert-info {
+        background-color: #f8fafc; /* 更轻的背景 */
+        border: none;
+        color: var(--text-primary);
+        border-radius: var(--border-radius);
+        border-left: 3px solid var(--primary-light); /* 稍微轻一点的边框 */
+    }
+    
+    /* 修复进度条问题 */
+    .progress {
+        display: none;
+    }
+    
+    .progress.show-progress {
+        display: flex;
+    }
+    
+    /* 为统计数据添加样式 */
+    .stats-badge {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+        background-color: #f1f3f5;
+        border: 1px solid #e9ecef;
+        color: var(--text-secondary);
+        border-radius: 30px;
+    }
+    
+    /* 简化表单组件，减轻视觉重量 */
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #a8bbd6;
+        box-shadow: 0 0 0 2px rgba(15, 43, 80, 0.1);
+    }
+    
+    /* 添加明确的分隔线 */
+    .separator {
+        height: 1px;
+        background-color: #eaecef;
+        margin: 1.5rem 0;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="header-wrapper">
@@ -14,11 +226,11 @@
     </div>
 </div>
 
-<div class="container">
+<div class="container mt-4">
     <div class="export-card">
-        <div class="card mt-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-download"></i> 导出设置</h5>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-download me-2"></i> 导出设置</h5>
             </div>
             <div class="card-body">
                 <form action="{{ url_for('export_regulation_data') }}" method="post" id="exportForm">
@@ -40,6 +252,8 @@
                         </div>
                     </div>
                     
+                    <div class="separator"></div>
+                    
                     <div class="row mb-4">
                         <div class="col-md-3">
                             <label class="form-label">数据内容:</label>
@@ -48,13 +262,13 @@
                             <div class="form-check">
                                 <input class="form-check-input content-checkbox" type="checkbox" name="content" value="causes" id="check-causes" checked data-target="causes-fields-section">
                                 <label class="form-check-label" for="check-causes">
-                                    事由表 <span class="badge bg-secondary">{{ causes_count }} 条记录</span>
+                                    事由表 <span class="stats-badge ms-2">{{ causes_count }} 条记录</span>
                                 </label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check mt-2">
                                 <input class="form-check-input content-checkbox" type="checkbox" name="content" value="punishments" id="check-punishments" checked data-target="punishments-fields-section">
                                 <label class="form-check-label" for="check-punishments">
-                                    处罚表 <span class="badge bg-secondary">{{ punishments_count }} 条记录</span>
+                                    处罚表 <span class="stats-badge ms-2">{{ punishments_count }} 条记录</span>
                                 </label>
                             </div>
                         </div>
@@ -116,6 +330,8 @@
                         </div>
                     </div>
                     
+                    <div class="separator"></div>
+                    
                     <div class="row mb-4">
                         <div class="col-md-3">
                             <label class="form-label">文件格式:</label>
@@ -127,7 +343,7 @@
                                     Excel (.xlsx)
                                 </label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check mt-2">
                                 <input class="form-check-input" type="radio" name="format" value="csv" id="format-csv">
                                 <label class="form-check-label" for="format-csv">
                                     CSV (.csv) <small class="text-muted">支持中文，使用UTF-8-BOM编码</small>
@@ -146,11 +362,11 @@
                         </ul>
                     </div>
                     
-                    <div class="text-center">
+                    <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary" id="exportButton">
-                            <i class="bi bi-download"></i> 导出数据
+                            <i class="bi bi-download me-1"></i> 导出数据
                         </button>
-                        <div class="progress mt-3 d-none" id="exportProgress">
+                        <div class="progress mt-3" id="exportProgress">
                             <div class="progress-bar progress-bar-striped progress-bar-animated" 
                                  role="progressbar" aria-valuenow="100" aria-valuemin="0" 
                                  aria-valuemax="100" style="width: 100%">
@@ -162,39 +378,24 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .export-card {
-            max-width: 800px;
-            margin: 0 auto;
-            margin-top: -1rem;
-        }
-        
-        .card {
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-radius: 8px;
-        }
-        
-        .card-header {
-            border-radius: 8px 8px 0 0 !important;
-            padding: 1rem 1.5rem;
-        }
-        
-        .fields-section {
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-            border: 1px solid #e9ecef;
-        }
-    </style>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // 更新统计数据显示
+        const causesCountElement = document.querySelector('#check-causes + label .stats-badge');
+        const punishmentsCountElement = document.querySelector('#check-punishments + label .stats-badge');
+        
+        if (causesCountElement) {
+            causesCountElement.textContent = '{{ causes_count }} 条记录';
+        }
+        
+        if (punishmentsCountElement) {
+            punishmentsCountElement.textContent = '{{ punishments_count }} 条记录';
+        }
+        
         // 处理内容选择框变化
         const contentCheckboxes = document.querySelectorAll('.content-checkbox');
         const fieldsContainers = document.querySelectorAll('.fields-section');
@@ -290,7 +491,15 @@
             
             // 显示进度条
             exportButton.disabled = true;
-            exportProgress.classList.remove('d-none');
+            exportProgress.classList.add('show-progress');
+            
+            // 修复: 添加定时器，在导出完成后隐藏进度条
+            // 在实际导出完成后，浏览器会自动离开页面下载文件，所以这是保险措施
+            setTimeout(function() {
+                exportProgress.classList.remove('show-progress');
+                exportButton.disabled = false;
+            }, 30000); // 30秒后自动重置
+            
             return true;
         });
         
