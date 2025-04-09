@@ -1,0 +1,72 @@
+<form method="post" action="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}" class="form-card">
+    <input type="hidden" name="form_type" value="regulation">
+    
+    <div class="form-section">
+        <h3 class="section-title"><i class="bi bi-journal-text"></i> 法规基本信息</h3>
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="name" class="form-label">法规名称</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ regulation.name }}" required>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="issuing_authority" class="form-label">制定机关</label>
+                <input type="text" id="issuing_authority" name="issuing_authority" class="form-control" value="{{ regulation.issuing_authority or '' }}">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="publish_date" class="form-label">公布日期</label>
+                <input type="text" id="publish_date" name="publish_date" class="form-control date-picker" value="{{ regulation.publish_date.strftime('%Y-%m-%d') if regulation.publish_date else '' }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="effective_date" class="form-label">施行日期</label>
+                <input type="text" id="effective_date" name="effective_date" class="form-control date-picker" value="{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '' }}">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="hierarchy_level" class="form-label">法律效力位阶</label>
+                <select id="hierarchy_level" name="hierarchy_level" class="form-control">
+                    <option value="">-- 选择效力位阶 --</option>
+                    <option value="法律" {% if regulation.hierarchy_level == '法律' %}selected{% endif %}>法律</option>
+                    <option value="行政法规" {% if regulation.hierarchy_level == '行政法规' %}selected{% endif %}>行政法规</option>
+                    <option value="部门规章" {% if regulation.hierarchy_level == '部门规章' %}selected{% endif %}>部门规章</option>
+                    <option value="地方性法规" {% if regulation.hierarchy_level == '地方性法规' %}selected{% endif %}>地方性法规</option>
+                    <option value="自治条例" {% if regulation.hierarchy_level == '自治条例' %}selected{% endif %}>自治条例</option>
+                    <option value="单行条例" {% if regulation.hierarchy_level == '单行条例' %}selected{% endif %}>单行条例</option>
+                    <option value="地方政府规章" {% if regulation.hierarchy_level == '地方政府规章' %}selected{% endif %}>地方政府规章</option>
+                </select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="validity_status" class="form-label">时效性</label>
+                <select id="validity_status" name="validity_status" class="form-control">
+                    <option value="有效" {% if regulation.validity_status == '有效' %}selected{% endif %}>有效</option>
+                    <option value="已废止" {% if regulation.validity_status == '已废止' %}selected{% endif %}>已废止</option>
+                    <option value="已修订" {% if regulation.validity_status == '已修订' %}selected{% endif %}>已修订</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="province" class="form-label">省</label>
+                <input type="text" id="province" name="province" class="form-control" value="{{ regulation.province or '' }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="city" class="form-label">市</label>
+                <input type="text" id="city" name="city" class="form-control" value="{{ regulation.city or '' }}">
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('regulation.regulation_detail', regulation_id=regulation.id) }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> 取消
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> 保存基本信息
+        </button>
+    </div>
+</form>

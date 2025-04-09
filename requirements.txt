@@ -23,7 +23,6 @@ Flask-Admin==1.6.1
 Flask-Login==0.6.3
 Flask-Migrate==4.0.5
 Flask-SQLAlchemy==3.1.1
-gensim @ file:///C:/b/abs_efsh9stgvi/croot/gensim_1725376635600/work
 gitdb==4.0.12
 GitPython==3.1.44
 greenlet==3.1.1
@@ -40,11 +39,8 @@ lxml==5.3.1
 Mako==1.3.9
 MarkupSafe==3.0.2
 mkl-service==2.4.0
-mkl_fft @ file:///C:/Users/dev-admin/mkl/mkl_fft_1730823082242/work
-mkl_random @ file:///C:/Users/dev-admin/mkl/mkl_random_1730822522280/work
 modelscope==1.23.1
 narwhals==1.30.0
-numpy @ file:///C:/b/abs_c1ywpu18ar/croot/numpy_and_numpy_base_1708638681471/work/dist/numpy-1.26.4-cp312-cp312-win_amd64.whl#sha256=becc06674317799ad0165a939a7613809d0bee9bd328a1e4308c57c39cacf08c
 openpyxl==3.1.5
 outcome==1.3.0.post0
 packaging==24.2
@@ -65,11 +61,9 @@ pytz==2025.1
 referencing==0.36.2
 requests==2.32.3
 rpds-py==0.23.1
-scipy @ file:///C:/Users/dev-admin/cr_scipy-feedstock/scipy_1733846735088/work/dist/scipy-1.13.1-cp312-cp312-win_amd64.whl#sha256=29e35e361a1c0f2a8bd6637711c606710892a9720f204eedf199be112626342d
 selenium==4.29.0
 setuptools==75.8.0
 six==1.17.0
-smart-open @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/smart_open_1699483216058/work
 smmap==5.0.2
 sniffio==1.3.1
 sortedcontainers==2.4.0

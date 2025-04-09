@@ -1,10 +1,14 @@
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
-from app import app, db
-from models import LegalRegulation, LegalRegulationVersion
 import logging
 from datetime import datetime
 import re
+import argparse
+
+# 创建Flask应用上下文
+from app import create_app
+from app.extensions import db
+from app.models.regulation import LegalRegulation, LegalRegulationVersion
 
 # 配置日志
 logging.basicConfig(
@@ -38,7 +42,7 @@ def get_or_create_version(regulation, version_year):
     ).first()
     
     if not version:
-        effective_date = regulation.effective_date if regulation.effective_date else datetime(version_year, 1, 1)
+        effective_date = regulation.effective_date if regulation.effective_date else regulation.publish_date
         version = LegalRegulationVersion(
             regulation=regulation,
             version_number=f"{version_year}年版",
@@ -99,9 +103,10 @@ def import_regulations_info(info_file):
                                 pass
                     elif isinstance(date_value, datetime):
                         regulation_data[model_field] = date_value
+            
             if 'effective_date' not in regulation_data or not regulation_data['effective_date']:
-                logger.warning(f"法规 {name} 未提供施行日期，使用当前日期替代")
-                regulation_data['effective_date'] = datetime.now()
+                logger.warning(f"法规 {name} 未提供施行日期，使用公布日期替代")
+                regulation_data['effective_date'] = regulation_data.get('publish_date', datetime.now())
             
             existing_regulation = LegalRegulation.query.filter_by(name=name).first()
             current_effective_date = regulation_data['effective_date']
@@ -145,12 +150,16 @@ def import_regulations_info(info_file):
         raise
 
 if __name__ == '__main__':
-    import argparse
     parser = argparse.ArgumentParser(description='法律法规基础信息导入工具')
     parser.add_argument('--info', help='仅导入法规基础信息Excel文件路径')
     args = parser.parse_args()
+    
     default_info_file = 'data/law_info.xlsx'
     logger.info("开始导入法律法规基础信息")
+    
+    # 创建应用上下文
+    app = create_app()
+    
     with app.app_context():
         try:
             if args.info:

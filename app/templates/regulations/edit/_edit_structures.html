@@ -1,0 +1,89 @@
+<div class="form-card">
+    <h3 class="section-title">
+        <i class="bi bi-list-ol"></i> 条文管理
+        <button type="button" class="btn btn-sm btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#addStructureModal">
+            <i class="bi bi-plus-circle"></i> 添加条文
+        </button>
+    </h3>
+    
+    <!-- 条文筛选与搜索 -->
+    <div class="d-flex align-items-center mb-3">
+        <div class="btn-group btn-group-sm me-2">
+            <button type="button" class="btn btn-outline-primary" id="expandAllStructures">
+                <i class="bi bi-arrows-expand"></i> 展开全部
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="collapseAllStructures">
+                <i class="bi bi-arrows-collapse"></i> 折叠全部
+            </button>
+        </div>
+        
+        <div class="ms-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">搜索条文</span>
+                <input type="text" class="form-control" id="structureSearch" placeholder="输入关键词...">
+                <button class="btn btn-outline-secondary" type="button" id="structureSearchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="ms-auto">
+            <label for="structureSort" class="form-label me-2 mb-0">排序:</label>
+            <select id="structureSort" class="form-select form-select-sm" style="width: auto;">
+                <option value="article-asc">按条号升序</option>
+                <option value="article-desc">按条号降序</option>
+                <option value="id-asc">按创建时间升序</option>
+                <option value="id-desc">按创建时间降序</option>
+            </select>
+        </div>
+    </div>
+    
+    {% if structures %}
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            单击条文标题展开编辑界面。共 <strong>{{ structures|length }}</strong> 条条文。
+        </div>
+        
+        {% for structure in structures %}
+            <div class="item-card {% if request.args.get('_anchor') == 'structure-' ~ structure.id %}active{% endif %}" id="structure-{{ structure.id }}">
+                <div class="item-card-header" data-bs-toggle="collapse" data-bs-target="#structure-collapse-{{ structure.id }}" aria-expanded="false">
+                    <div class="item-title">
+                        {{ structure.original_text }}
+                    </div>
+                    <i class="bi bi-chevron-down collapse-toggle collapsed"></i>
+                </div>
+                <div class="collapse item-card-body" id="structure-collapse-{{ structure.id }}">
+                    <form method="post" action="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}" class="item-form">
+                        <input type="hidden" name="form_type" value="structure">
+                        <input type="hidden" name="structure_id" value="{{ structure.id }}">                     
+                       
+                        
+                        <div class="form-group">
+                            <label for="structure-content-{{ structure.id }}" class="form-label">内容</label>
+                            <textarea id="structure-content-{{ structure.id }}" name="content" class="form-control textarea-tall" rows="5">{{ structure.content }}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <form method="post" action="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}" onsubmit="return confirm('确定要删除此条文吗？此操作不可恢复。');" class="d-inline">
+                                <input type="hidden" name="form_type" value="delete_structure">
+                                <input type="hidden" name="structure_id" value="{{ structure.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                            </form>
+                            
+                            <button type="submit" class="btn btn-primary btn-edit">
+                                <i class="bi bi-save"></i> 保存此条文
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            该法规尚未添加任何条文。
+        </div>
+    {% endif %}
+</div>

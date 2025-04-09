@@ -1,0 +1,148 @@
+<div class="form-card">
+    <h3 class="section-title">
+        <i class="bi bi-exclamation-diamond"></i> 事由管理
+        <button type="button" class="btn btn-sm btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#addCauseModal">
+            <i class="bi bi-plus-circle"></i> 添加事由
+        </button>
+    </h3>
+    
+    <!-- 事由筛选与搜索 -->
+    <div class="d-flex align-items-center mb-3">
+        <div class="btn-group btn-group-sm me-2">
+            <button type="button" class="btn btn-outline-primary" id="expandAllCauses">
+                <i class="bi bi-arrows-expand"></i> 展开全部
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="collapseAllCauses">
+                <i class="bi bi-arrows-collapse"></i> 折叠全部
+            </button>
+        </div>
+        
+        <div class="ms-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">搜索事由</span>
+                <input type="text" class="form-control" id="causeSearch" placeholder="输入关键词...">
+                <button class="btn btn-outline-secondary" type="button" id="causeSearchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="ms-auto">
+            <label for="causeSort" class="form-label me-2 mb-0">排序:</label>
+            <select id="causeSort" class="form-select form-select-sm" style="width: auto;">
+                <option value="code-asc">按编号升序</option>
+                <option value="code-desc">按编号降序</option>
+                <option value="id-asc">按创建时间升序</option>
+                <option value="id-desc">按创建时间降序</option>
+            </select>
+        </div>
+    </div>
+    
+    {% if causes %}
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            单击事由标题展开编辑界面。共 <strong>{{ causes|length }}</strong> 条事由。
+        </div>
+        
+        {% for cause in causes %}
+            <div class="item-card {% if request.args.get('_anchor') == 'cause-' ~ cause.id %}active{% endif %}" id="cause-{{ cause.id }}">
+                <div class="item-card-header" data-bs-toggle="collapse" data-bs-target="#cause-collapse-{{ cause.id }}" aria-expanded="false">
+                    <div class="item-title">                        
+                        {{ cause.description|truncate(50) }}
+                    </div>
+                    <i class="bi bi-chevron-down collapse-toggle collapsed"></i>
+                </div>
+                <div class="collapse item-card-body" id="cause-collapse-{{ cause.id }}">
+                    <form method="post" action="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}" class="item-form">
+                        <input type="hidden" name="form_type" value="cause">
+                        <input type="hidden" name="cause_id" value="{{ cause.id }}">
+                        
+                        <div class="row">
+                            
+                            <div class="col-md-4 form-group">
+                                <label for="cause-severity-{{ cause.id }}" class="form-label">严重程度</label>
+                                <select id="cause-severity-{{ cause.id }}" name="severity" class="form-control">
+                                    <option value="轻微" {% if cause.severity == '轻微' %}selected{% endif %}>轻微</option>
+                                    <option value="一般" {% if cause.severity == '一般' %}selected{% endif %}>一般</option>
+                                    <option value="严重" {% if cause.severity == '严重' %}selected{% endif %}>严重</option>
+                                    <option value="特别严重" {% if cause.severity == '特别严重' %}selected{% endif %}>特别严重</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cause-description-{{ cause.id }}" class="form-label">事由描述</label>
+                            <textarea id="cause-description-{{ cause.id }}" name="description" class="form-control" rows="3">{{ cause.description }}</textarea>
+                        </div>
+                        <!-- 隐藏的 code 字段 -->
+                        <input type="hidden" id="cause-code-{{ cause.id }}" name="code" value="{{ cause.code }}">           
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="cause-violation-type-{{ cause.id }}" class="form-label">违则</label>
+                                <input type="text" id="cause-violation-type-{{ cause.id }}" name="violation_type" class="form-control" value="{{ cause.violation_type or '' }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="cause-violation-clause-{{ cause.id }}" class="form-label">违则条款</label>
+                                <input type="text" id="cause-violation-clause-{{ cause.id }}" name="violation_clause" class="form-control" value="{{ cause.violation_clause or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="cause-behavior-{{ cause.id }}" class="form-label">行为</label>
+                                <input type="text" id="cause-behavior-{{ cause.id }}" name="behavior" class="form-control" value="{{ cause.behavior or '' }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="cause-illegal-behavior-{{ cause.id }}" class="form-label">违法行为</label>
+                                <input type="text" id="cause-illegal-behavior-{{ cause.id }}" name="illegal_behavior" class="form-control" value="{{ cause.illegal_behavior or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="cause-penalty-type-{{ cause.id }}" class="form-label">罚则</label>
+                                <input type="text" id="cause-penalty-type-{{ cause.id }}" name="penalty_type" class="form-control" value="{{ cause.penalty_type or '' }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="cause-penalty-clause-{{ cause.id }}" class="form-label">罚则条款</label>
+                                <input type="text" id="cause-penalty-clause-{{ cause.id }}" name="penalty_clause" class="form-control" value="{{ cause.penalty_clause or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <form method="post" action="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}" onsubmit="return confirm('确定要删除此事由吗？此操作将同时删除关联的处罚信息，且不可恢复。');" class="d-inline">
+                                <input type="hidden" name="form_type" value="delete_cause">
+                                <input type="hidden" name="cause_id" value="{{ cause.id }}">
+                                
+                        
+                            </form>
+                            <button type="button" class="btn btn-danger btn-sm delete-cause-btn" 
+                                    data-cause-id="{{ cause.id }}" 
+                                    data-action-url="{{ url_for('regulation.regulation_edit', regulation_id=regulation.id) }}">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-edit">
+                                <i class="bi bi-save"></i> 保存此事由
+                            </button>
+                             <!-- 处罚措施表格上方 -->
+                             <div class="d-flex justify-content-between align-items-center mb-3">
+                               
+                                {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                                <a href="{{ url_for('regulation.punishment_edit', cause_id=cause.id) }}" class="btn btn-primary btn-edit">
+                                    <i class="bi bi-save"></i> 编辑处罚措施
+                                </a>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            该法规尚未添加任何事由。
+        </div>
+    {% endif %}
+</div>

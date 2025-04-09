@@ -3,10 +3,13 @@ import re
 import logging
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
-from app import app, db
-from models import LegalRegulation, LegalStructure, LegalRegulationVersion
 from tqdm import tqdm
 import docx
+
+# 创建Flask应用上下文
+from app import create_app
+from app.extensions import db
+from app.models.regulation import LegalRegulation, LegalRegulationVersion, LegalStructure
 
 # 中文数字转阿拉伯数字的映射
 CHINESE_NUMBERS = {
@@ -23,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def chinese_to_arabic(chinese_str):
-    """将中文数字转换为阿拉伯数字，支持带‘零’的情况"""
+    """将中文数字转换为阿拉伯数字，支持带'零'的情况"""
     if not chinese_str or not any(c in CHINESE_NUMBERS for c in chinese_str):
         return chinese_str
 
@@ -175,7 +178,7 @@ def format_only_article(row):
     """仅格式化独立条的条款编号"""
     return f"第{row['条']}条" if row['条'] and row['条'] != '0' else ''
 
-def import_law_structure_to_db(file_path):
+def import_law_structure_to_db(file_path, app=None):
     """从DOCX文件导入法律结构到数据库，并更新step_id"""
     filename = os.path.basename(file_path)
     regulation_name, version_number = parse_filename(filename)
@@ -183,12 +186,14 @@ def import_law_structure_to_db(file_path):
         logger.warning(f"无法从文件名 {filename} 解析法规名称，跳过")
         return 0
 
+    logger.info(f"开始处理文件: {filename}, 法规名: {regulation_name}, 版本: {version_number}")
+    
     law_data = extract_law_structure_from_docx(file_path)
     if not law_data:
         logger.warning(f"文件 {file_path} 未提取到有效内容")
         return 0
 
-    # 计算每个“条”的出现次数，用于判断独立条
+    # 计算每个"条"的出现次数，用于判断独立条
     article_counts = {}
     for row in law_data:
         article = row['条']
@@ -196,7 +201,12 @@ def import_law_structure_to_db(file_path):
             article_counts[article] = article_counts.get(article, 0) + 1
     single_articles = {article for article, count in article_counts.items() if count == 1}
 
-    with app.app_context():
+    # 使用已有的应用上下文或创建新的
+    need_app_context = app is None
+    if need_app_context:
+        app = create_app()
+    
+    with app.app_context() if need_app_context else nullcontext():
         try:
             # 检查法规是否存在
             regulation = LegalRegulation.query.filter_by(name=regulation_name).first()
@@ -224,8 +234,10 @@ def import_law_structure_to_db(file_path):
                 regulation_id=regulation.id,
                 version_id=version.id
             ).all()
+            
             for structure in existing_structures:
                 db.session.delete(structure)
+            
             db.session.commit()
             logger.info(f"已清除法规 {regulation_name} 版本 {version.version_number} 的 {len(existing_structures)} 条旧条文")
 
@@ -258,28 +270,76 @@ def import_law_structure_to_db(file_path):
             db.session.rollback()
             logger.error(f"导入 {regulation_name} 时出错: {str(e)}")
             return 0
+        except Exception as e:
+            logger.error(f"处理 {filename} 时发生未知错误: {str(e)}")
+            db.session.rollback()
+            return 0
+
+# 添加空上下文管理器以简化代码
+class nullcontext:
+    def __enter__(self): pass
+    def __exit__(self, *args): pass
 
 def process_law_files(folder_path):
     """处理文件夹中的所有DOCX文件并直接入库"""
+    if not os.path.exists(folder_path):
+        logger.error(f"文件夹 {folder_path} 不存在")
+        return
+        
     docx_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.docx')]
     if not docx_files:
         logger.info(f"在 {folder_path} 中没有找到docx文件")
         return
 
+    # 创建一个应用实例，所有导入共用同一个实例以提高性能
+    app = create_app()
+    
     total_structures = 0
-    for file_name in tqdm(docx_files, desc="处理法律文件"):
-        file_path = os.path.join(folder_path, file_name)
-        structure_count = import_law_structure_to_db(file_path)
-        total_structures += structure_count
+    successful_files = 0
+    failed_files = 0
+    
+    with app.app_context():
+        for file_name in tqdm(docx_files, desc="处理法律文件"):
+            file_path = os.path.join(folder_path, file_name)
+            try:
+                structure_count = import_law_structure_to_db(file_path, app)
+                if structure_count > 0:
+                    total_structures += structure_count
+                    successful_files += 1
+                else:
+                    failed_files += 1
+            except Exception as e:
+                logger.error(f"处理文件 {file_name} 时发生异常: {str(e)}")
+                failed_files += 1
 
-    logger.info(f"所有文件处理完成，共导入 {total_structures} 条条文")
+    logger.info(f"所有文件处理完成，成功处理 {successful_files} 个文件，失败 {failed_files} 个文件，共导入 {total_structures} 条条文")
+    print(f"处理完成! 成功: {successful_files}, 失败: {failed_files}, 总条文: {total_structures}")
 
 if __name__ == "__main__":
-    folder_path = "laws_folder"
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logger.info(f"已创建文件夹 {folder_path}，请将法律DOCX文件放入其中，然后重新运行程序")
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='法律法规结构导入工具')
+    parser.add_argument('--folder', default='laws_folder', help='包含法律DOCX文件的文件夹路径')
+    parser.add_argument('--file', help='单个要导入的DOCX文件路径')
+    
+    args = parser.parse_args()
+    
+    if args.file:
+        # 导入单个文件
+        if not os.path.exists(args.file):
+            print(f"文件 {args.file} 不存在!")
+            logger.error(f"文件 {args.file} 不存在")
+        else:
+            app = create_app()
+            with app.app_context():
+                count = import_law_structure_to_db(args.file, app)
+                print(f"导入完成! 条文数: {count}")
     else:
-        process_law_files(folder_path)
-
-
+        # 导入整个文件夹
+        folder_path = args.folder
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            logger.info(f"已创建文件夹 {folder_path}，请将法律DOCX文件放入其中，然后重新运行程序")
+            print(f"已创建文件夹 {folder_path}，请将法律DOCX文件放入其中，然后重新运行程序")
+        else:
+            process_law_files(folder_path)

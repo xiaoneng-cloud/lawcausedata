@@ -4,20 +4,18 @@
 1. 从Excel文件读取最新数据
 2. 支持单独导入法规基础信息、条文、事由和处罚信息
 3. 支持按施行日期自动管理法规版本
-4. 根据sheet名称中的年份（如“中华人民共和国统计法（2024）”中的2024）确认版本
+4. 根据sheet名称中的年份（如"中华人民共和国统计法（2024）"中的2024）确认版本
 5. 保留旧数据并与旧版本关联
 6. 版本排序以施行时间为准
 """
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
-from app import app, db
-from models import (
-    LegalRegulation, 
-    LegalStructure, 
-    LegalCause, 
-    LegalPunishment,
-    LegalRegulationVersion
-)
+
+# 创建Flask应用上下文
+from app import create_app
+from app.extensions import db
+from app.models.regulation import LegalRegulation, LegalRegulationVersion, LegalStructure, LegalCause, LegalPunishment
+
 import logging
 from datetime import datetime
 import json
@@ -139,7 +137,8 @@ def get_or_create_version(regulation, version_year):
             publish_date=effective_date,
             effective_date=effective_date,
             status='current',  # 临时设置为current
-            changes_summary=f"{version_year}年修订版本"
+            changes_summary=f"{version_year}年修订版本",
+            step_id=1  # 默认设置step_id为1
         )
         db.session.add(version)
         db.session.flush()
@@ -227,6 +226,9 @@ def import_regulations_structures(structure_file):
                     except Exception as e:
                         logger.warning(f"处理法规 {sheet_name} 的条文时出错: {str(e)}")
                 
+                # 更新 step_id 为 2
+                version.step_id = 2
+                
                 regulation_count += 1
                 total_structure_count += structure_count
                 logger.info(f"成功导入法规 {sheet_name} 的 {structure_count} 条条文")
@@ -261,8 +263,10 @@ def import_regulations_causes(cause_file):
                 version_year = get_version_from_sheet_name(sheet_name)
                 if version_year is None:
                     continue
-                regulation_name = sheet_name.replace(f"（{version_year}）", "").strip()
+                regulation_name = sheet_name.replace(f"（{version_year}）", "").replace(f"({version_year})", "").strip()
+                logger.debug(f"处理后的 regulation_name: {repr(regulation_name)}")
                 
+                                
                 regulation = LegalRegulation.query.filter_by(name=regulation_name).first()
                 if not regulation:
                     logger.warning(f"法规 {regulation_name} 不存在，请先导入法规基础信息")
@@ -317,6 +321,9 @@ def import_regulations_causes(cause_file):
                     except Exception as e:
                         logger.warning(f"处理法规 {sheet_name} 的事由时出错: {str(e)}")
                 
+                # 更新 step_id 为 3
+                version.step_id = 3
+                
                 regulation_count += 1
                 total_cause_count += cause_count
                 logger.info(f"成功导入法规 {sheet_name} 的 {cause_count} 条事由")
@@ -351,7 +358,7 @@ def import_regulations_punishments(punishment_file):
                 version_year = get_version_from_sheet_name(sheet_name)
                 if version_year is None:
                     continue
-                regulation_name = sheet_name.replace(f"（{version_year}）", "").strip()
+                regulation_name = sheet_name.replace(f"（{version_year}）", "").replace(f"({version_year})", "").strip()
                 
                 regulation = LegalRegulation.query.filter_by(name=regulation_name).first()
                 if not regulation:
@@ -415,6 +422,9 @@ def import_regulations_punishments(punishment_file):
                     except Exception as e:
                         logger.warning(f"处理法规 {sheet_name} 的处罚时出错: {str(e)}")
                 
+                # 更新 step_id 为 4 (完成所有导入)
+                version.step_id = 4
+                
                 regulation_count += 1
                 total_punishment_count += punishment_count
                 logger.info(f"成功导入法规 {sheet_name} 的 {punishment_count} 条处罚")
@@ -473,11 +483,17 @@ def main():
     parser.add_argument('--cause', help='仅导入法规事由Excel文件路径')
     parser.add_argument('--punishment', help='仅导入法规处罚Excel文件路径')
     args = parser.parse_args()
+    
     default_info_file = 'data/law_info.xlsx'
     default_structure_file = 'data/law_structure.xlsx'
     default_cause_file = 'data/law_cause.xlsx'
     default_punish_file = 'data/law_punish.xlsx'
+    
     logger.info("开始导入法律法规数据")
+    
+    # 创建应用上下文
+    app = create_app()
+    
     with app.app_context():
         try:
             if args.all:

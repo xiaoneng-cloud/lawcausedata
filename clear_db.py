@@ -1,10 +1,14 @@
 # clear_data.py
-from app import app, db
-from models import LegalRegulation, LegalStructure, LegalCause, LegalPunishment, LegalRegulationVersion
+# 创建Flask应用上下文
+from app import create_app
+from app.extensions import db
+from app.models.regulation import LegalRegulation, LegalStructure, LegalCause, LegalPunishment, LegalRegulationVersion
 
 def clear_database():
     """清空业务数据但保留数据库结构和用户账户"""
     try:
+        # 创建应用上下文
+        app = create_app()
         with app.app_context():
             # 先删除具有外键依赖的表中的数据
             print("正在删除处罚数据...")
