@@ -1,0 +1,124 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化处理按钮
+        const runButtons = document.querySelectorAll('.run-step-btn');
+        const fullProcessButton = document.getElementById('run-full-process');
+        
+        // 处理单步执行按钮
+        runButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const stepName = button.getAttribute('data-step');
+                const regulationId = button.getAttribute('data-regulation-id');
+                executeStep(stepName, regulationId, button);
+            });
+        });
+        
+        // 处理全流程按钮
+        if (fullProcessButton) {
+            fullProcessButton.addEventListener('click', function() {
+                const regulationId = fullProcessButton.getAttribute('data-regulation-id');
+                alert('全流程处理功能正在开发中...');
+                // TODO: 实现全流程处理
+            });
+        }
+        
+        // 执行处理步骤
+        function executeStep(stepName, regulationId, button) {
+            // 更新按钮状态
+            button.disabled = true;
+            button.innerHTML = '<span class="step-spinner me-1"></span> 处理中...';
+            
+            // 更新步骤状态
+            const stepElement = button.closest('.processing-step');
+            stepElement.querySelector('.step-status').textContent = '处理中';
+            stepElement.classList.add('processing');
+            
+            // 清除之前的错误信息
+            const prevError = stepElement.querySelector('.step-error-message');
+            if (prevError) prevError.remove();
+            
+            // 发送处理请求
+            fetch(`/process/run/${regulationId}/${stepName}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 轮询任务状态
+                    pollTaskStatus(data.task_id, button, stepElement);
+                } else {
+                    displayProcessingError(button, stepElement, data.message || '请求失败');
+                }
+            })
+            .catch(error => {
+                displayProcessingError(button, stepElement, '请求失败: ' + error.message);
+                console.error('处理请求失败:', error);
+            });
+        }
+        
+        // 轮询任务状态
+        function pollTaskStatus(taskId, button, stepElement) {
+            const statusInterval = setInterval(() => {
+                fetch(`/process/status/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const task = data.task;
+                            
+                            // 更新进度信息
+                            if (task.message) {
+                                const statusElement = stepElement.querySelector('.step-status');
+                                statusElement.textContent = task.status === 'running' ? 
+                                    '处理中: ' + task.message : task.status === 'completed' ? 
+                                    '完成' : task.status === 'error' ? '错误' : task.status;
+                            }
+                            
+                            // 如果任务完成或出错，停止轮询
+                            if (task.status === 'completed' || task.status === 'error') {
+                                clearInterval(statusInterval);
+                                
+                                if (task.status === 'completed') {
+                                    button.disabled = false;
+                                    button.innerHTML = '<i class="bi bi-check-circle me-1"></i> 已完成';
+                                    button.classList.remove('btn-primary');
+                                    button.classList.add('btn-success');
+                                    stepElement.classList.remove('processing');
+                                    stepElement.classList.add('completed');
+                                } else {
+                                    displayProcessingError(button, stepElement, task.message || '处理失败');
+                                }
+                            }
+                        } else {
+                            clearInterval(statusInterval);
+                            displayProcessingError(button, stepElement, data.message || '获取状态失败');
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(statusInterval);
+                        displayProcessingError(button, stepElement, '获取状态失败: ' + error.message);
+                        console.error('轮询状态失败:', error);
+                    });
+            }, 2000); // 每2秒轮询一次
+        }
+        
+        // 显示处理错误
+        function displayProcessingError(button, stepElement, message) {
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-play-fill me-1"></i> 重试';
+            stepElement.querySelector('.step-status').textContent = '错误';
+            stepElement.classList.remove('processing');
+            stepElement.classList.add('error');
+            
+            // 显示错误信息
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'step-error-message alert alert-danger mt-2';
+            errorDiv.innerHTML = `<strong>错误:</strong> ${message}`;
+            
+            // 添加到步骤主体中
+            stepElement.querySelector('.step-body').appendChild(errorDiv);
+        }
+    });
+    </script>

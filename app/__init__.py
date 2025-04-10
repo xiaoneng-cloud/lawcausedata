@@ -18,10 +18,13 @@ def create_app(config_object='config.Config'):
     from app.views.regulation import regulation_bp
     from app.views.export import export_bp
     from app.views.admin import setup_admin
+    from app.views.process import process_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(regulation_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(process_bp)
+    
     
     # 设置Admin
     setup_admin(app)

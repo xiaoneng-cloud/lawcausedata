@@ -397,4 +397,143 @@ footer p {
     85% { opacity: 1; }
     100% { opacity: 0; }
 }
+/* 处理流程样式 */
+.processing-timeline {
+    position: relative;
+    padding: 1rem 0;
+    margin-top: 1.5rem;
+}
+
+.processing-step {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 2.5rem;
+    border-left: 2px solid #e9ecef;
+}
+
+.processing-step:last-child {
+    margin-bottom: 1rem;
+}
+
+.processing-step::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #e2e6ea;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #e9ecef;
+    z-index: 1;
+}
+
+.processing-step.processing::before {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+}
+
+.processing-step.completed::before {
+    background-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.processing-step.error::before {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.step-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.step-status {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background-color: #f8f9fa;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.processing-step.processing .step-status {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.processing-step.completed .step-status {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.processing-step.error .step-status {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.step-body {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.step-body p {
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.step-body ul {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+}
+
+.step-body ul li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.processing-full {
+    margin-top: 2rem;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.run-step-btn[disabled] {
+    cursor: not-allowed;
+}
+
+.step-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: step-spinner 0.75s linear infinite;
+}
+
+@keyframes step-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.step-error-message {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
 </style>

@@ -10,7 +10,10 @@ instance/
 
 # 忽略日志文件
 *.log
+*.docx
+*.xlsx
 
 # 忽略本地配置
 .env
+*.bin
 local_settings.py

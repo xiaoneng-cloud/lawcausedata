@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     {% include 'regulations/edit/_edit_styles.html' %}
+    {% include 'regulations/edit/_edit_process_scripts.html' %}
 </head>
 <body>
     <div class="header-wrapper">
@@ -66,6 +67,11 @@
                     <i class="bi bi-exclamation-diamond"></i> 事由管理 <span class="badge rounded-pill bg-light text-dark">{{ causes|length }}</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button" role="tab" aria-controls="processing" aria-selected="false">
+                    <i class="bi bi-gear-fill"></i> 数据处理
+                </button>
+            </li>
         </ul>
 
         <!-- 标签内容 -->
@@ -88,6 +94,10 @@
             <!-- 事由管理标签 -->
             <div class="tab-pane fade" id="causes" role="tabpanel" aria-labelledby="causes-tab">
                 {% include 'regulations/edit/_edit_causes.html' %}
+            </div>
+             <!--数据处理标签 -->
+            <div class="tab-pane fade" id="processing" role="tabpanel" aria-labelledby="processing-tab">
+                {% include 'regulations/edit/_process_causes.html' %}
             </div>
         </div>
     </div>

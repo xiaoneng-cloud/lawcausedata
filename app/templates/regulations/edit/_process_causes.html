@@ -1,0 +1,57 @@
+<div class="form-card">
+    <h3 class="section-title">
+        <i class="bi bi-gear-fill"></i> 数据处理工具
+        <small class="text-muted ms-2">用于处理和标准化法规数据</small>
+    </h3>                    
+    <!-- 这里将放置数据处理界面 -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <div class="processing-timeline">
+            <!-- 处理节点1：格式化条款引用 -->
+            <div class="processing-step" data-step="format_num">
+                <div class="step-header">
+                    <h5><i class="bi bi-1-circle-fill me-2"></i>格式化条款引用</h5>
+                    <span class="step-status">未执行</span>
+                </div>
+                <div class="step-body">
+                    <p>此步骤将处理法规中的条款引用，包括：</p>
+                    <ul>
+                        <li>将中文数字转换为阿拉伯数字（如"第一条"→"第1条"）</li>
+                        <li>补全条款引用上下文（如"第2款"→"第X条第2款"）</li>
+                        <li>处理本条、前款等相对引用</li>
+                        <li>标准化引用格式</li>
+                    </ul>
+                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num" data-regulation-id="{{ regulation.id }}">
+                        <i class="bi bi-play-fill me-1"></i> 执行此步骤
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 处理节点2：处理关联法律引用 -->
+            <div class="processing-step" data-step="format_num_ex">
+                <div class="step-header">
+                    <h5><i class="bi bi-2-circle-fill me-2"></i>处理关联法律引用</h5>
+                    <span class="step-status">未执行</span>
+                </div>
+                <div class="step-body">
+                    <p>此步骤将处理法规中引用的其他法律条文，包括：</p>
+                    <ul>
+                        <li>识别并补全《XXX》中的引用条款</li>
+                        <li>自动抓取关联法律的条文内容</li>
+                        <li>整合关联法律信息</li>
+                    </ul>
+                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num_ex" data-regulation-id="{{ regulation.id }}">
+                        <i class="bi bi-play-fill me-1"></i> 执行此步骤
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 全流程处理按钮 -->
+            <div class="processing-full">
+                <button type="button" class="btn btn-accent" id="run-full-process" data-regulation-id="{{ regulation.id }}">
+                    <i class="bi bi-lightning-fill me-1"></i> 执行全流程处理
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
