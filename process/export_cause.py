@@ -10,8 +10,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def format_clause(record):
     clause_str = f"第{record['条']}条"
     for part in ['款', '项', '目']:
-        if record[part]:
-            clause_str += f"第{record[part]}{part}"
+        # 检查 record[part] 是否为 nan
+        if pd.notna(record[part]):
+            # 将符合条件的 record[part] 转换为整数类型
+            clause_str += f"第{int(record[part])}{part}"
     return clause_str
 
 def extract_clause_numbers(clause): 
@@ -104,7 +106,7 @@ def process_sheet(df, output_file):
         re.compile(r'(?!.*行政处分)罚款'),
         re.compile(r'(?!.*行政处分)没收(违法所得|非法财物)'),
         re.compile(r'(?!.*行政处分)责令(改正|停产停业|停止|关闭)'),
-        re.compile(r'(?!.*行政处分)暂扣|吊销(?!\s*(处|罚))(.*(许可证|执照|资格证书|资质证书|驾驶证|驾照|营业执照))'),
+        re.compile(r'(?!.*行政处分)暂扣|吊销(?!\s*(处|罚))(.*(许可证|执照|资格证书|资质证书|驾驶证|驾照|执照))'),
         re.compile(r'(?!.*行政处分)拘留|强制报废|强制排除妨碍'),
         re.compile(r'(?!.*行政处分)降低资质等级'),
         re.compile(r'(?!.*行政处分)限制从业')

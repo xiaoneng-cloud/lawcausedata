@@ -5,6 +5,7 @@ import os
 import logging
 from cozepy import COZE_CN_BASE_URL, Coze, TokenAuth, Message, ChatEventType
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import argparse
 
 # 配置日志
 logging.basicConfig(
@@ -196,19 +197,13 @@ def process_row(coze, bot_id, user_id, row, law_structure_df):
         logging.error(f"处理 编号 {clause_id} 时发生错误: {e}")
         return None, clause_id
 
-def main():
+def main(law_ai_result_file, law_structure_file, law_cause_file, output_file):
     # Coze API 配置
     coze_api_token = 'pat_sSMcUXlyKiF37mbQ5VmCK2ufcXFLamnAgUkzDtUbz4aWZp0uyQafjkUPnOLt6z8M'
     coze_api_base = COZE_CN_BASE_URL
     coze = Coze(auth=TokenAuth(token=coze_api_token), base_url=coze_api_base)
     bot_id = '7478622295620861964'
     user_id = 'zzs'
-
-    # 文件路径
-    law_ai_result_file = "result\\LawAIResult.xlsx"
-    law_structure_file = "result\\law_structure_format_num_ex.xlsx"
-    law_cause_file = "result\\law_cause.xlsx"
-    output_file = "result\\law_punish.xlsx"
 
     # 加载法律结构文件
     wb_law_structure = openpyxl.load_workbook(law_structure_file)
@@ -293,4 +288,11 @@ def main():
             logging.info(f"无有效数据，删除 {law_cause_file}")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Process law files.')
+    parser.add_argument('law_ai_result_file', type=str, help='Path to LawAIResult.xlsx')
+    parser.add_argument('law_structure_file', type=str, help='Path to law_structure_format_num_ex.xlsx')
+    parser.add_argument('law_cause_file', type=str, help='Path to law_cause.xlsx')
+    parser.add_argument('output_file', type=str, help='Path to output file (law_punish.xlsx)')
+    args = parser.parse_args()
+
+    main(args.law_ai_result_file, args.law_structure_file, args.law_cause_file, args.output_file)

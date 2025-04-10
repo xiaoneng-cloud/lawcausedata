@@ -1,8 +1,8 @@
 import pandas as pd
 from openpyxl import load_workbook
 import re
-from tools.extract_violation_articles import get_violation_pattern
-from tools.extract_violation_articles import find_associated_body
+from process.tools.extract_violation_articles import get_violation_pattern
+from process.tools.extract_violation_articles import find_associated_body
 
 
 # 定义行政处罚相关的正则表达式模式

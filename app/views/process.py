@@ -48,8 +48,10 @@ def run_processing_step(regulation_id, step_name):
         input_file = os.path.join(temp_dir, f"regulation_{regulation_id}.xlsx")
         output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed.xlsx")
         ex_output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed_ex.xlsx")
-        output_txt_path = os.path.join(temp_dir, f"regulation_{regulation_id}_processed.txt")
+        output_txt_path = os.path.join(temp_dir, f"{regulation.name}.txt")
         ai_output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed_ai.xlsx")
+        cause_file = os.path.join(temp_dir, f"regulation_{regulation_id}_causes.xlsx")
+        punish_file = os.path.join(temp_dir, f"regulation_{regulation_id}_punishments.xlsx")
         
         processing_tasks[task_id]['message'] = '正在导出法规数据到Excel...'
         logger.info(f"开始导出法规 {regulation_id} 到 {input_file}")
@@ -116,8 +118,13 @@ def run_processing_step(regulation_id, step_name):
             main_export_cause(ex_output_file,output_txt_path)
 
             from process.get_coze_ai_message_ex import main as main_get_coze_ai_message_ex
-            main_get_coze_ai_message_ex(output_txt_path,ai_output_file)
+            #main_get_coze_ai_message_ex(output_txt_path,ai_output_file)
 
+            from process.format_law_result import update_law_result
+            #update_law_result(ai_output_file,ex_output_file,cause_file)
+
+            from process.get_coze_discretion import main as main_get_coze_discretion
+            #main_get_coze_discretion(ai_output_file,ex_output_file,cause_file,punish_file)
 
             if os.path.exists(ai_output_file):
                 logger.info(f"处理第二步后文件生成成功: {ai_output_file}")
@@ -200,8 +207,10 @@ def export_regulation_to_excel(regulation, output_path):
             if col not in df.columns:
                 df[col] = None
         
-        # 导出到Excel
-        df.to_excel(output_path, index=False)
+        # 生成sheet名称
+        sheet_name = f"{regulation.name}"
+        # 导出到Excel，设置 sheet 名称为法律法规的名称加上版本的年
+        df.to_excel(output_path, index=False, sheet_name=sheet_name)
 
 def import_processed_data(regulation, input_path):
     """从处理后的Excel导入数据回数据库"""

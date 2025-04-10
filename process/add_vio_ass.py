@@ -3,11 +3,12 @@ from openpyxl import load_workbook
 import re
 import jieba
 from gensim.models import KeyedVectors
-from tools.extract_violation_articles import PENALTY_TYPES
+from process.tools.extract_violation_articles import PENALTY_TYPES
 import numpy as np
-from tools.extract_violation_articles import get_violation_pattern
-from tools.extract_violation_articles import get_clause_array
-from tools.extract_violation_articles import find_associated_body
+from process.tools.extract_violation_articles import get_violation_pattern
+from process.tools.extract_violation_articles import get_clause_array
+from process.tools.extract_violation_articles import find_associated_body
+import os
 
 
 # 定义辅助词和否定词，增加 "下列行为" 和 "之一"，用于语义比较
@@ -16,7 +17,10 @@ REMOVE_WORDS = ["不", "未", "的", "下列行为", "之一"]
 
 def load_pretrained_model():
     try:
-        model = KeyedVectors.load_word2vec_format('AILab.bin', binary=True)
+        # 构建 AILab.bin 的路径
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(base_dir, 'AILab.bin')
+        model = KeyedVectors.load_word2vec_format(model_path, binary=True)
         return model
     except FileNotFoundError:
         print("未找到预训练模型文件，请检查文件路径。")
