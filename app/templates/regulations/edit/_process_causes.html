@@ -21,7 +21,7 @@
                         <li>处理本条、前款等相对引用</li>
                         <li>标准化引用格式</li>
                     </ul>
-                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num" data-regulation-id="{{ regulation.id }}">
+                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num" data-regulation-id="{{ regulation.id }}" data-version-id="{{ current_version.id }}">
                         <i class="bi bi-play-fill me-1"></i> 执行此步骤
                     </button>
                 </div>
@@ -40,7 +40,7 @@
                         <li>自动抓取关联法律的条文内容</li>
                         <li>整合关联法律信息</li>
                     </ul>
-                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num_ex" data-regulation-id="{{ regulation.id }}">
+                    <button type="button" class="btn btn-primary run-step-btn" data-step="format_num_ex" data-regulation-id="{{ regulation.id }}" data-version-id="{{ current_version.id }}">
                         <i class="bi bi-play-fill me-1"></i> 执行此步骤
                     </button>
                 </div>
@@ -48,7 +48,7 @@
             
             <!-- 全流程处理按钮 -->
             <div class="processing-full">
-                <button type="button" class="btn btn-accent" id="run-full-process" data-regulation-id="{{ regulation.id }}">
+                <button type="button" class="btn btn-accent" id="run-full-process" data-regulation-id="{{ regulation.id }}" data-version-id="{{ current_version.id }}">
                     <i class="bi bi-lightning-fill me-1"></i> 执行全流程处理
                 </button>
             </div>

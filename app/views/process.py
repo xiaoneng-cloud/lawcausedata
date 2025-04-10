@@ -1,7 +1,7 @@
 # app/views/process.py
 from flask import Blueprint, jsonify, request, current_app, render_template
 from flask_login import login_required, current_user
-from app.models import LegalRegulation, LegalStructure, LegalCause, LegalPunishment
+from app.models import LegalRegulation, LegalStructure, LegalCause, LegalPunishment,LegalRegulationVersion
 from app.extensions import db
 import os
 import tempfile
@@ -11,6 +11,7 @@ import logging
 import sys
 from datetime import datetime
 from flask import session
+import re
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,12 +29,15 @@ def run_processing_step(regulation_id, step_name):
         return jsonify(success=False, message='无权执行此操作'), 403
     
     regulation = LegalRegulation.query.get_or_404(regulation_id)
+    # 获取版本ID
+    version_id = request.args.get('version_id', type=int)
     task_id = str(uuid.uuid4())
     
     processing_tasks[task_id] = {
         'status': 'pending',
         'step': step_name,
         'regulation_id': regulation_id,
+        'version_id': version_id,  # 添加版本ID
         'start_time': datetime.now().timestamp(),
         'message': '任务准备中'
     }
@@ -42,20 +46,35 @@ def run_processing_step(regulation_id, step_name):
         processing_tasks[task_id]['status'] = 'running'
         processing_tasks[task_id]['message'] = '正在导出法规数据...'
         
+        
         temp_dir = tempfile.mkdtemp()
         logger.info(f"创建临时目录: {temp_dir}")
         
         input_file = os.path.join(temp_dir, f"regulation_{regulation_id}.xlsx")
         output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed.xlsx")
         ex_output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed_ex.xlsx")
-        output_txt_path = os.path.join(temp_dir, f"{regulation.name}.txt")
         ai_output_file = os.path.join(temp_dir, f"regulation_{regulation_id}_processed_ai.xlsx")
         cause_file = os.path.join(temp_dir, f"regulation_{regulation_id}_causes.xlsx")
         punish_file = os.path.join(temp_dir, f"regulation_{regulation_id}_punishments.xlsx")
         
+        # 获取版本信息（如果有）
+        version = None
+        if version_id:
+            version = LegalRegulationVersion.query.get(version_id)
+        # 从版本号提取年份，或者使用版本号本身
+        year = None
+        if version:
+            year_match = re.search(r'(\d{4})', version.version_number)
+            year = year_match.group(1) if year_match else version.version_number
+        # 生成带有年份的 txt 文件名
+        txt_name = regulation.name
+        if year:
+            txt_name = f"{txt_name}（{year}）"
+        output_txt_path = os.path.join(temp_dir, f"{txt_name}.txt")
+
         processing_tasks[task_id]['message'] = '正在导出法规数据到Excel...'
-        logger.info(f"开始导出法规 {regulation_id} 到 {input_file}")
-        structure_count = export_regulation_to_excel(regulation, input_file)
+        logger.info(f"开始导出法规 {regulation_id} 版本 {version_id} 到 {input_file}")
+        structure_count = export_regulation_to_excel(regulation, input_file, version_id)
         logger.info(f"导出完成，共 {structure_count} 条记录")
         
         processing_tasks[task_id]['message'] = '正在执行数据处理...'
@@ -118,13 +137,13 @@ def run_processing_step(regulation_id, step_name):
             main_export_cause(ex_output_file,output_txt_path)
 
             from process.get_coze_ai_message_ex import main as main_get_coze_ai_message_ex
-            #main_get_coze_ai_message_ex(output_txt_path,ai_output_file)
+            main_get_coze_ai_message_ex(output_txt_path,ai_output_file)
 
             from process.format_law_result import update_law_result
-            #update_law_result(ai_output_file,ex_output_file,cause_file)
+            update_law_result(ai_output_file,ex_output_file,cause_file)
 
             from process.get_coze_discretion import main as main_get_coze_discretion
-            #main_get_coze_discretion(ai_output_file,ex_output_file,cause_file,punish_file)
+            main_get_coze_discretion(ai_output_file,ex_output_file,cause_file,punish_file)
 
             if os.path.exists(ai_output_file):
                 logger.info(f"处理第二步后文件生成成功: {ai_output_file}")
@@ -159,12 +178,25 @@ def get_task_status(task_id):
     
     return jsonify(success=True, task=processing_tasks[task_id])
 
-def export_regulation_to_excel(regulation, output_path):
+def export_regulation_to_excel(regulation, output_path, version_id=None):
     """将法规数据导出到Excel"""
     with current_app.app_context():
+        # 获取版本信息（如果有）
+        version = None
+        if version_id:
+            version = LegalRegulationVersion.query.get(version_id)
+        # 构建查询以支持版本
+        structures_query = LegalStructure.query.filter_by(regulation_id=regulation.id)
+        if version_id:
+            structures_query = structures_query.filter(
+                db.or_(
+                    LegalStructure.version_id == version_id,
+                    LegalStructure.version_id.is_(None)  # 兼容旧数据
+                )
+            )
         # 获取法规条文
-        structures = LegalStructure.query.filter_by(regulation_id=regulation.id).all()
-        
+        structures = structures_query.all()
+
         # 准备DataFrame数据
         data = []
         for structure in structures:
@@ -174,43 +206,47 @@ def export_regulation_to_excel(regulation, output_path):
                 '项': structure.item,
                 '目': structure.section,
                 '内容': structure.content,
-                '罚则': 0  # 默认值
+                '原内容': structure.content,
+                '条款': structure.original_text,
+                '原条款': structure.original_text
             }
             data.append(row)
         
-        # 标记罚则条款
-        causes = LegalCause.query.filter_by(regulation_id=regulation.id).all()
-        for cause in causes:
-            # 对于每个处罚事由，尝试找到对应的法规条款
-            punishments = LegalPunishment.query.filter_by(cause_id=cause.id).all()
-            if punishments:
-                # 如果有处罚信息，尝试解析条款引用
-                import re
-                ref_matches = []
-                if cause.penalty_clause:
-                    ref_matches = re.findall(r'第(\d+)条第(\d+)款', cause.penalty_clause)
-                
-                for tiao, kuan in ref_matches:
-                    for row in data:
-                        if row['条'] == int(tiao) and row['款'] == int(kuan):
-                            row['罚则'] = 1
+        # 遍历所有记录，将”条款“中，值匹配”第X条“的修改为”第X条第1款“
+        pattern = r'第(\d+)条'
+        for row in data:
+            if isinstance(row['条款'], str):
+                match = re.match(pattern, row['条款'])
+                if match:
+                    article_num = match.group(1)
+                    row['条款'] = f'第{article_num}条第1款'
         
         # 创建DataFrame并导出
         df = pd.DataFrame(data)
         
         # 如果数据为空，创建一个带有必要列的空DataFrame
-        if len(data) == 0:
-            df = pd.DataFrame(columns=['条', '款', '项', '目', '内容', '罚则'])
+        # 创建Excel写入对象
+        writer = pd.ExcelWriter(output_path, engine='xlsxwriter')
         
-        # 确保所有列都存在
-        for col in ['条', '款', '项', '目', '内容', '罚则']:
-            if col not in df.columns:
-                df[col] = None
+        # 根据是否有版本信息修改sheet名称
+        sheet_name = regulation.name
+        if version:
+            # 从版本号提取年份，或者使用版本号本身
+            logger.info(f"version_number: {version.version_number}")
+            year_match = re.search(r'(\d{4})', version.version_number)
+            year = year_match.group(1) if year_match else version.version_number
+            sheet_name = f"{regulation.name}（{year}）"
         
-        # 生成sheet名称
-        sheet_name = f"{regulation.name}"
-        # 导出到Excel，设置 sheet 名称为法律法规的名称加上版本的年
-        df.to_excel(output_path, index=False, sheet_name=sheet_name)
+        # 确保sheet名称不超过Excel的限制（31个字符）
+        if len(sheet_name) > 31:
+            sheet_name = sheet_name[:28] + "..."
+        
+        # 将数据写入指定sheet名称
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+        
+        # 保存Excel文件
+        writer.close()
+        return len(structures)
 
 def import_processed_data(regulation, input_path):
     """从处理后的Excel导入数据回数据库"""

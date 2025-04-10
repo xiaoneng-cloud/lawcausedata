@@ -9,7 +9,8 @@
             button.addEventListener('click', function() {
                 const stepName = button.getAttribute('data-step');
                 const regulationId = button.getAttribute('data-regulation-id');
-                executeStep(stepName, regulationId, button);
+                const versionId = button.getAttribute('data-version-id');
+                executeStep(stepName, regulationId, versionId, button);
             });
         });
         
@@ -23,7 +24,7 @@
         }
         
         // 执行处理步骤
-        function executeStep(stepName, regulationId, button) {
+        function executeStep(stepName, regulationId, versionId, button) {
             // 更新按钮状态
             button.disabled = true;
             button.innerHTML = '<span class="step-spinner me-1"></span> 处理中...';
@@ -37,8 +38,8 @@
             const prevError = stepElement.querySelector('.step-error-message');
             if (prevError) prevError.remove();
             
-            // 发送处理请求
-            fetch(`/process/run/${regulationId}/${stepName}`, {
+            // 发送处理请求，添加版本ID参数
+            fetch(`/process/run/${regulationId}/${stepName}?version_id=${versionId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

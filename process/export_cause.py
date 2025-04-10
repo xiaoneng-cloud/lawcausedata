@@ -10,9 +10,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def format_clause(record):
     clause_str = f"第{record['条']}条"
     for part in ['款', '项', '目']:
-        # 检查 record[part] 是否为 nan
-        if pd.notna(record[part]):
-            # 将符合条件的 record[part] 转换为整数类型
+        # 检查 record[part] 是否为 nan 且不为 0
+        if pd.notna(record[part]) and int(record[part]) != 0:
             clause_str += f"第{int(record[part])}{part}"
     return clause_str
 
